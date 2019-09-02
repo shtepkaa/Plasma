@@ -1,0 +1,5 @@
+# Makefile.cpu
+
+CPU=linux-gnu
+
+# Makefile.cpu

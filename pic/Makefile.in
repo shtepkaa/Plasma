@@ -1,0 +1,41 @@
+# Makefile.in
+
+include Makefile.cpu
+
+ifeq ($(CPU),linux-gnu-sequential)
+    CXX = nvcc
+	CFLAGS = -c
+    LIBS = -Wl,--start-group \
+	  	 ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+	  	 ${MKLROOT}/lib/intel64/libmkl_sequential.a \
+	  	 ${MKLROOT}/lib/intel64/libmkl_core.a \
+	  	 -Wl,--end-group -lpthread -lm -ldl
+    AR = ar
+    COPT = -O3 -Wall -fopenmp
+endif
+
+ifeq ($(CPU),linux-gnu)
+    CXX = nvcc
+    CFLAGS = -c
+    LIBS = -Wl,--start-group \
+      	 ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+      	 ${MKLROOT}/lib/intel64/libmkl_gnu_thread.a \
+      	 ${MKLROOT}/lib/intel64/libmkl_core.a \
+      	 -Wl,--end-group -lgomp -lpthread -lm -ldl
+    AR = ar
+    COPT = -O3 -Wall -Wpedantic -Wno-vla -fopenmp
+endif
+
+ifeq ($(CPU),linux-intel)
+    CXX = icpc
+	CFLAGS = -c
+    LIBS = -Wl,--start-group \
+	  	 ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
+	  	 ${MKLROOT}/lib/intel64/libmkl_intel_thread.a \
+	  	 ${MKLROOT}/lib/intel64/libmkl_core.a \
+	  	 -Wl,--end-group -liomp5 -lpthread -lm -ldl
+    AR = ar
+    COPT = -O3 -Wall -qopenmp
+endif
+
+# Makefile.in
