@@ -253,18 +253,18 @@ void Hilbert_index_inverse(
 // for a simulation box with 2^{dims[i]} patches per side
 // (2^{dims[0] + dims[1]} patches in total)
 uint General_hilbert_index_orientation(
-    const uint * dims, const int * coords, uint & entry, uint & dir
+    const uint * dims, const int * coordinates, uint & entry, uint & dir
 )
 {
     if (
-        coords[0] < 0 || coords[0] >= (1 << dims[0])
-        || coords[1] < 0 || coords[1] >= (1 << dims[1])
+        coordinates[0] < 0 || coordinates[0] >= (1 << dims[0])
+        || coordinates[1] < 0 || coordinates[1] >= (1 << dims[1])
     )
     {
         return MPI_PROC_NULL;
     }
 
-    const uint crds[2] = { uint(coords[0]), uint(coords[1]) }; 
+    const uint coords[2] = { uint(coordinates[0]), uint(coordinates[1]) }; 
 
     dir = (dims[0] < dims[1]);
 
@@ -275,15 +275,15 @@ uint General_hilbert_index_orientation(
 
     for (uint i = dims[dir] - 1; i >= min_dim; --i)
     {
-        loc = Bit(coords[dir], i);
+        loc = Bit(coordinates[dir], i);
         index += loc * (1 << (i + min_dim));
-        coords[dir] -= loc * (1 << i);
+        coordinates[dir] -= loc * (1 << i);
     }
 
     // calculate entry and direction
     if (min_dim)
     {
-        index += Hilbert_index_orientation(min_dim, crds, entry, dir);
+        index += Hilbert_index_orientation(min_dim, coords, entry, dir);
     }
 
     return index;
@@ -311,17 +311,20 @@ void Arrange_array<2>(const uint * in, uint * out)
 }
 
 template<>
-void Arrange_array<3>(const uint * in, uint * out)
+void Identify_descend_order<2>(const uint * arg, uint * order)
 {
-    const uint comp[3] = { (in[1] < in[2]), (in[0] < in[2]), (in[0] < in[1]) };
+    order[0] = (arg[0] < arg[1]);
+    order[1] = 1 - order[0];
+}
 
-    const uint imed = comp[0] ^ comp[1] ^ comp[2];
+template<>
+void Identify_descend_order<3>(const uint * arg, uint * order)
+{
+    const uint comp[3] = { arg[1] < arg[2], arg[0] < arg[2], arg[0] < arg[1] };
 
-    comp[imed] <<= imed & 1;
-
-    out[0] = in(1 - (imed > 0) + comp[imed]);
-    out[1] = in(imed);
-    out[2] = in(1 + (imed < 2) - comp[imed]);
+    order[!comp[0] + !comp[1]] = 2;
+    order[comp[0] && comp[1]] = comp[2];
+    order[1 + (comp[0] || comp[1])] = !comp[2];
 }
 
 //============================================================================//
@@ -330,78 +333,66 @@ void Arrange_array<3>(const uint * in, uint * out)
 // Calculates the compact Hilbert index of a patch of given coordinates
 // for a simulation box with 2^{dims[i]} patches per side
 // (2^(dims[0] + dims[1] + dims[2]) patches in total)
-uint General_hilbert_index(const uint * dims, int * coords)
+uint General_hilbert_index(const uint * dims, const int * coordinates)
 {
     if (
-        coords[0] < 0 || coords[0] >= (1 << dims[0])
-        || coords[1] < 0 || coords[1] >= (1 << dims[1])
-        || coords[2] < 0 || coords[2] >= (1 << dims[2])
+        coordinates[0] < 0 || coordinates[0] >= (1 << dims[0])
+        || coordinates[1] < 0 || coordinates[1] >= (1 << dims[1])
+        || coordinates[2] < 0 || coordinates[2] >= (1 << dims[2])
     )
     {
         return MPI_PROC_NULL;
     }
 
-    uint crds[3] = { uint(coords[0]), uint(coords[1]), uint(coords[2]) };
+    uint order[3];
+                      
+    // compare dimension sizes
+    Identify_descend_order<3>(dims, order);
 
-    uint index = 0;
+    uint coords[3]
+        = {
+            uint(coordinates[order[0]]),
+            uint(coordinates[order[1]]),
+            uint(coordinates[order[2]])
+        };
+
+    const uint min_dim = dims[order[2]];
+
+    // approach on flattened 2D grid along max and med dims
+    // 3D grid is projected along min_dim axis
+    // erase last min_dim bits, not relevent for this phase
+    const uint flat_dims[2]
+        = { dims[order[0]] - min_dim, dims[order[1]] - min_dim };
+
+    const uint flat_coords[2] = { coords[0] >> min_dim, coords[1] >> min_dim };
+
     uint entry = 0;
     uint dir = 0;
 
-    uint imin;
-    uint imax;
-    uint imed;
+    uint index
+        = General_hilbert_index(flat_dims, flat_coords, entry, dir)
+            * (1 << (3 * min_dim));
 
-    uint arraged_dims[3];
-                      
-    // compare dimension sizes
-    if (dims[0] >= dims[1] && dims[0] >= dims[2]) { imax = 0; }
-    else if ((dims[1] > dims[0]) && (dims[1] >= dims[2])) { imax = 1; }
-    else { imax = 2; }
+    // in local cube of side min_dim
+    // local entry point "entry" and initial direction "dir" of local hilbert
+    // curve has been determined by the previous call of General_hilbert_index
+    // relative position in local cube is given by last min_dim bits of position
+    
+    // only keep the last min_dim bits
+    const uint mask = (1 << min_dim) - 1;
 
-    if (dims[(imax + 1) % 3] >= dims[(imax + 2) % 3])
-    {
-        imed = (imax + 1) % 3;
-        imin = (imax + 2) % 3;
-    }
-    else { imed = (imax + 2) % 3; imin = (imax + 1) % 3; }
+    coords[0] &= mask;
+    coords[1] &= mask;
+    coords[2] &= mask;
 
-    // approach on a flattened 2D grid along imax and imed
-    // the 3D grid is projected along imin axis
-    // erase last dims[imin] bits. Not relevent for this phase
-    tempp[imax] = crds[imax] >> dims[imin];
-
-    // erase last dims[imin] bits. Not relevent for this phase
-    tempp[imed] = crds[imed] >> dims[imin];
-
-    index += General_hilbert_index(
-        dims[imax] - dims[imin], dims[imed] - dims[imin], tempp[imax],
-        tempp[imed], entry, dir
-    ) * (1 << (3 * dims[imin]));
-
-    // In local cube of side dims[imin]
-    // The local Entry point "entry" and initial Direction "dir" of the local
-    // hilbert curve has been determined by the previous call
-    // to compacthilbertindex2
-    // Relative position in the local cube is given by the last dims[imin]
-    // bits of the position
-
-    // Only keep the last dims[imin] bits
-    tempp[imax] = crds[imax] & ((1 << dims[imin]) - 1);
-    tempp[imed] = crds[imed] & ((1 << dims[imin]) - 1);
-    tempp[imin] = crds[imin] & ((1 << dims[imin]) - 1);
-
-    // Add local index to the previously calculated one
-    index
-        += Hilbert_index(
-            dims[imin], tempp[imax], tempp[imed], tempp[imin], entry, dir
-        );
-
-    return index;
+    // add local index to the previously calculated one
+    return index + Hilbert_index(min_dim, coords, entry, dir);
 }
 
 //============================================================================//
-// 2D version
+//  General Hilbert index inverse
 //============================================================================//
+// 2D
 // General Hilbert index inverse calculates given coordinates
 // of a patch for a given Hilbert index in a simulation box with 2^{dims[i]} patches
 // per side (2^(dims[0] + dims[1]) patches in total)
@@ -433,72 +424,63 @@ void General_hilbert_index_inverse(
 }
 
 //============================================================================//
-// 3D version
+//  General Hilbert index inverse
 //============================================================================//
-void General_hilbert_index_inverse(const uint * dims, uint * coords, uint index)
+// 3D version
+void General_hilbert_index_inverse(
+    const uint * dims, uint * coordinates, const uint index
+)
 {
-    uint entry = 0;
-    uint dir = 0;
-
-    uint imin;
-    uint imed;
-    uint imax;
-
-    uint localh;
-
-    uint tempp[3];
-
+    uint order[3];
+                      
     // compare dimension sizes
-    if (dims[0] >= dims[1] && dims[0] >= dims[2]) { imax = 0; }
-    else if (dims[1] > dims[0] && dims[1] >= dims[2]) { imax = 1; }
-    else { imax = 2; }
+    Identify_descend_order<3>(dims, order);
 
-    if (dims[(imax + 1) % 3] >= dims[(imax + 2) % 3])
-    {
-        imed = (imax + 1) % 3;
-        imin = (imax + 2) % 3;
-    }
-    else { imed = (imax + 2) % 3; imin = (imax + 1) % 3; }
+    const uint min_dim = dims[order[2]];
 
-    // localize in which sub hypercube the point is
-    // do not account for the first 3 * imin bits of index
-    localh = (index >> (dims[imin] * 3));
+    const uint flat_dims[2]
+        = { dims[order[0]] - min_dim, dims[order[1]] - min_dim };
+
+    uint coords[3];
+
+    // localize in which sub-hypercube the point is
+    // do not account for the first 3 * min_dim bits of index
+    uint loc_ind = index >> (3 * min_dim);
 
     // run the 2D inversion algorithm on the reduced domain
-    General_hilbert_index_inverse(
-        dims[imax] - dims[imin], dims[imed] - dims[imin],
-        dims[imax], dims[imed], localh
-    );
+    General_hilbert_index_inverse(flat_dims, coords, loc_ind);
 
-    // now local P stores the position of the cube in the 2D domain
+    // now coordinates store the position of the cube in the 2D domain
     // we need to run the 3D inversion algorithm on this cube
     // with the correct entry point and direction
 
+    uint entry = 0;
+    uint dir = 0;
+
     // run the 2D indexgenerator in order to evaluate entry and dir
-    localh
+    loc_ind
         = General_hilbert_index_orientation(
-            dims[imax] - dims[imin], dims[imed] - dims[imin],
-            dims[imax], dims[imed], entry, dir
+            flat_dims, coords[imax], coords[imed], entry, dir
         );
 
     // transform coordinates in the global frame
-    dims[imax] *= (1 << dims[imin]);
-    dims[imed] *= (1 << dims[imin]);
-    dims[imin] = 0;
+    coords[imax] *= (1 << dims[imin]);
+    coords[imed] *= (1 << dims[imin]);
+    coords[imin] = 0;
 
     // use only first bits of index for the local hypercube
-    localh = index & ((1 << (dims[imin] * 3)) - 1);
+    loc_ind = index & ((1 << (dims[imin] * 3)) - 1);
 
     // run the cubic inversion algorithm in the local sub hypercube
     Hilbert_index_inverse(
-        dims[imin], &tempp[imax], &tempp[imed], &tempp[imin], localh,
+        dims[imin], &tempp[imax], &tempp[imed], &tempp[imin], loc_ind,
         entry, dir
     );
 
     // add results to the coordinates
-    dims[imax] += tempp[imax];
-    dims[imed] += tempp[imed];
-    dims[imin] += tempp[imin];
+    coords[imax] += tempp[imax];
+    coords[imed] += tempp[imed];
+    coords[imin] += tempp[imin];
 }
 
 } // namespace maxwell
