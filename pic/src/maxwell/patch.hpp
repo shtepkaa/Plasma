@@ -1,5 +1,5 @@
-#ifndef PATCH_H
-#define PATCH_H
+#ifndef PATCH_HPP
+#define PATCH_HPP
 
 /// FIXME /// #include "types.h"
 
@@ -41,7 +41,6 @@ class Patch
 
         // initialize
         Patch();
-        Patch(const uint *);
 
         // deallocate
         ~Patch();
@@ -52,6 +51,4 @@ class Patch
 
 } // namespace maxwell
 
-#include "patch.hpp"
-
-#endif // PATCH_H
+#endif // PATCH_HPP
