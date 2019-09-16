@@ -14,9 +14,8 @@ void Set_bit(uint & i, const uint k, const uint value)
 //============================================================================//
 //  Bitwise cyclic left rotation 
 //============================================================================//
-// evaluate left side of the rotated value then right side of it
-// and retain only the first dim bits
-// works only for shift <= dim
+// retain only the first dim bits
+// works only for (shift <= dim)
 uint Rotate_left(const uint value, const uint shift, const uint dim)
 {
     return (value << shift | value >> (dim - shift)) & ((1 << dim) - 1);
@@ -25,8 +24,7 @@ uint Rotate_left(const uint value, const uint shift, const uint dim)
 //============================================================================//
 //  Bitwise cyclic right rotation 
 //============================================================================//
-// evaluate right side of the rotated value then left side of it
-// and retain only the first dim bits
+// retain only the first dim bits
 // works only for (shift <= dim)
 uint Rotate_right(const uint value, const uint shift, const uint dim)
 {
@@ -64,7 +62,7 @@ uint Trailing_set_bit(const uint i)
 //============================================================================//
 //  Direction
 //============================================================================//
-// compute intra sub-hypercube direction for 0 <= i < 2^{dim}
+// compute intra sub-hypercube direction for (0 <= i < 2^{dim})
 uint Direction(const uint i, const uint dim)
 {
     if (!i) { return 0; }
@@ -75,7 +73,7 @@ uint Direction(const uint i, const uint dim)
 //============================================================================//
 //  Entry
 //============================================================================//
-// compute entry point for 0 <= i < 2^{dim}
+// compute entry point for (0 <= i < 2^{dim})
 uint Entry(const uint i)
 {
     if (i) { return Gray_code(((i - 1) >> 1) << 1); }
