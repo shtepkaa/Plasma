@@ -3,13 +3,15 @@
 
 /// FIXME /// #include "types.h"
 
+#include <vector>
+
 namespace maxwell {
 
 //============================================================================//
 //  Patch
 //============================================================================//
 template<Dim>
-class Patch
+class Domain
 {
     private:
 

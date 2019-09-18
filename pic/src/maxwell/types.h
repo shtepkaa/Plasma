@@ -3,10 +3,10 @@
 
 namespace maxwell {
 
-typedef unsigned int uint_t;
+typedef unsigned int uint;
 
 // dimensionality
-enum Dim { 1D, 2D, 3D };
+enum Dim: uint { 1D = 1, 2D, 3D };
 
 } // namespace maxwell
 

@@ -5,49 +5,52 @@
 
 namespace maxwell {
 
+//============================================================================//
 template<Dim>
-class Patch
+void Patch::Get_index()
 {
-    private:
+    /// TODO ///
+}
 
-        // MPI rank
-        uint rank;
+//============================================================================//
+template<Dim>
+void Patch::Get_neighbours()
+{
+    /// TODO ///
+}
 
-        // Hilbert index
-        uint index;
+//============================================================================//
+template<Dim>
+Patch::Patch()
+{
+    /// IS REQUIRED? ///
+}
 
-        // Cartesian grid coordinates
-        uint * coordinates;
+//============================================================================//
+template<Dim dim>
+Patch::Patch(const uint * coords, const uint * sizes)
+{
+    Alloc_init(dim, grid_coords, coords);
+    Alloc_init(dim, grid_sizes, sizes);
+}
 
-        // Cartesian grid sizes
-        uint * sizes;
+//============================================================================//
+template<Dim>
+Patch::~Patch()
+{
+    /// TODO ///
+}
 
-        // ghost size
-        uint ghost_size;
+//============================================================================//
+template<Dim>
+void Patch::Set_rank(const uint r) { rank = r; }
 
-        // adjacent patches in lexicographic order
-        Patch * neighbours;
-
-        // host data
-        double * host_data;
-
-        // device data
-        void * dev_data;
-
-        // identify neighbours
-        void Get_neighbours();
-
-    public:
-
-        // initialize
-        Patch();
-
-        // deallocate
-        ~Patch();
-
-        // obtain ghost
-        void Get_ghost(const uint);
-};
+//============================================================================//
+template<Dim dim>
+void Patch::Get_ghost(const uint pos)
+{
+    /// TODO ///
+}
 
 } // namespace maxwell
 
