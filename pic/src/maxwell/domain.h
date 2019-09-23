@@ -1,5 +1,5 @@
-#ifndef PATCH_H
-#define PATCH_H
+#ifndef DOMAIN_H
+#define DOMAIN_H
 
 /// FIXME /// #include "types.h"
 
@@ -51,11 +51,11 @@ class Domain
     public:
 
         // initialize
-        Patch();
-        Patch(const uint *, const uint *);
+        Domain();
+        Domain(const uint *, const uint *);
 
         // deallocate
-        ~Patch();
+        ~Domain();
 
         // set MPI rank
         void Set_rank(const uint);
@@ -66,6 +66,6 @@ class Domain
 
 } // namespace maxwell
 
-#include "patch.hpp"
+#include "domain.hpp"
 
-#endif // PATCH_H
+#endif // DOMAIN_H
