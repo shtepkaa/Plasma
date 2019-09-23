@@ -30,8 +30,8 @@ Patch::Patch()
 template<Dim dim>
 Patch::Patch(const uint * coords, const uint * sizes)
 {
-    Alloc_init(dim, grid_coords, coords);
-    Alloc_init(dim, grid_sizes, sizes);
+    Init_array(dim, grid_coords, coords);
+    Init_array(dim, grid_sizes, sizes);
 }
 
 //============================================================================//

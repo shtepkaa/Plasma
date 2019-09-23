@@ -16,7 +16,7 @@ class Patch
         // MPI rank
         uint rank;
 
-        // location
+        // host location identificator
         bool location;
 
         // Hilbert index
@@ -28,8 +28,8 @@ class Patch
         // Cartesian grid sizes
         uint * grid_sizes;
 
-        // ghost size
-        uint ghost_size;
+        // ghost width
+        uint ghost_width;
 
         // adjacent patches in lexicographic order
         Patch * neighbours;
@@ -41,7 +41,7 @@ class Patch
         void * dev_data;
 
         // identify hilbert index
-        void Get_index();
+        uint Get_index();
 
         // identify neighbours
         void Get_neighbours();

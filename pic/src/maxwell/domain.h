@@ -1,67 +1,99 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-/// FIXME /// #include "types.h"
-
-#include <vector>
+/// #include <vector>
 
 namespace maxwell {
 
+struct GhostId
+{
+    uint send_ind;
+    uint recv_ind;
+
+    uint size;
+    uint start;
+};
+
 //============================================================================//
-//  Patch
+//  Domain
 //============================================================================//
-template<Dim>
+template<Dim, Order>
 class Domain
 {
     private:
 
-        // MPI rank
+        // rank
         uint rank;
 
-        // location
-        bool location;
+        // global range of ranks
+        uint range;
 
-        // Hilbert index
-        uint index;
+        // neighbour count of ranks
+        uint neighbour_count;
 
-        // Cartesian grid coordinates
-        uint * grid_coords;
+        // neighbour ranks
+        uint * neighbour_ranks;
 
-        // Cartesian grid sizes
-        uint * grid_sizes;
+            /// // Cartesian grid coordinates
+            /// uint * grid_coords;
 
-        // ghost size
-        uint ghost_size;
+        // patches Hilbert index range
+        uint patch_min_index;
+        uint patch_max_index;
 
-        // adjacent patches in lexicographic order
-        Patch * neighbours;
+        // patches count
+        uint patch_count;
 
-        // host data
-        double * host_data;
+        // patches arranged in specified Order
+        Patch ** patches;
 
-        // device data
-        void * dev_data;
+        // patch Cartesian grid sizes
+        uint * patch_sizes;
 
-        // identify hilbert index
-        void Get_index();
+        // border patch count
+        uint border_patch_count;
 
-        // identify neighbours
-        void Get_neighbours();
+        // border patch indices
+        uint * border_patch_indices;
+
+        // neighbours incoming buffers markup
+        GhostId ** recv_buffer_markups;
+
+        // neighbours incoming buffers
+        double * recv_buffers;
+
+        // neighbours outcoming buffers markup
+        GhostId ** send_buffer_markups;
+
+        // neighbours outcoming buffers
+        double * send_buffers;
+
+        // identify neighbour ranks
+        void Set_neighbour_ranks();
+
+        // identify border patch indices
+        void Set_border_patch_indices();
+
+        // default initializer
+        Domain() {}
 
     public:
 
         // initialize
-        Domain();
-        Domain(const uint *, const uint *);
+        Domain(const uint, const uint, const uint *);
 
         // deallocate
         ~Domain();
 
-        // set MPI rank
-        void Set_rank(const uint);
+        // get rank
+        inline uint Get_rank() const { return rank; }
 
-        // obtain ghost
-        void Get_ghost(const uint);
+        // get Hilbert index range
+        inline uint Get_patch_min_index() const { return patch_min_index; }
+        inline uint Get_patch_max_index() const { return patch_max_index; }
+
+        // copy patch to CPU
+        void Copy_patch(const uint, double *) const;
 };
 
 } // namespace maxwell

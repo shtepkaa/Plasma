@@ -3,15 +3,10 @@
 
 namespace maxwell {
 
-/// MOVE ///
-void Identify_descend_order(const uint * arg, uint * order)
-{
-    const uint comp[3] = { arg[1] < arg[2], arg[0] < arg[2], arg[0] < arg[1] };
-
-    order[!comp[0] + !comp[1]] = 2;
-    order[comp[0] && comp[1]] = comp[2];
-    order[1 + (comp[0] || comp[1])] = !comp[2];
-}
+//============================================================================//
+//  Identify descend order
+//============================================================================//
+static void Identify_descend_order(const uint *, uint *);
 
 //============================================================================//
 //  Bit access
