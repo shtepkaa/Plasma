@@ -5,7 +5,11 @@
 
 namespace maxwell {
 
-struct GhostId
+//============================================================================//
+//  GhostIdentifier
+//============================================================================//
+// markup structure
+struct GhostIdentifier
 {
     uint send_ind;
     uint recv_ind;
@@ -17,7 +21,7 @@ struct GhostId
 //============================================================================//
 //  Domain
 //============================================================================//
-template<Dim, Order>
+template<Dim, Order, ArithmeticType>
 class Domain
 {
     private:
@@ -28,45 +32,36 @@ class Domain
         // global range of ranks
         uint range;
 
-        // neighbour count of ranks
-        uint neighbour_count;
-
         // neighbour ranks
-        uint * neighbour_ranks;
+        Array<uint> neighbour_ranks;
 
             /// // Cartesian grid coordinates
             /// uint * grid_coords;
+
+        // patch Cartesian grid sizes
+        uint * patch_sizes;
 
         // patches Hilbert index range
         uint patch_min_index;
         uint patch_max_index;
 
-        // patches count
-        uint patch_count;
+        // border patch indices
+        Array<uint> border_patch_indices;
 
         // patches arranged in specified Order
-        Patch ** patches;
-
-        // patch Cartesian grid sizes
-        uint * patch_sizes;
-
-        // border patch count
-        uint border_patch_count;
-
-        // border patch indices
-        uint * border_patch_indices;
+        Array<Patch> patches;
 
         // neighbours incoming buffers markup
-        GhostId ** recv_buffer_markups;
+        Array< Array<GhostIdentifier> > recv_buffer_markups;
 
         // neighbours incoming buffers
-        double * recv_buffers;
+        Array<ArithmeticType> recv_buffers;
 
         // neighbours outcoming buffers markup
-        GhostId ** send_buffer_markups;
+        Array< Array<GhostIdentifier> > send_buffer_markups;
 
         // neighbours outcoming buffers
-        double * send_buffers;
+        Array<ArithmeticType> send_buffers;
 
         // identify neighbour ranks
         void Set_neighbour_ranks();
@@ -74,15 +69,16 @@ class Domain
         // identify border patch indices
         void Set_border_patch_indices();
 
+        /// FIXME /// Either remove or switch to c++11: = delete
         // default initializer
         Domain() {}
 
     public:
 
-        // initialize
+        // initializion
         Domain(const uint, const uint, const uint *);
 
-        // deallocate
+        // deallocation
         ~Domain();
 
         // get rank
@@ -93,7 +89,7 @@ class Domain
         inline uint Get_patch_max_index() const { return patch_max_index; }
 
         // copy patch to CPU
-        void Copy_patch(const uint, double *) const;
+        void Copy_patch(const uint, ArithmeticType *) const;
 };
 
 } // namespace maxwell
