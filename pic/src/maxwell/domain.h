@@ -55,13 +55,13 @@ class Domain
         Array< Array<GhostIdentifier> > recv_buffer_markups;
 
         // neighbours incoming buffers
-        Array<ArithmeticType> recv_buffers;
+        Array<ArithmeticType, Device> recv_buffers;
 
         // neighbours outcoming buffers markup
         Array< Array<GhostIdentifier> > send_buffer_markups;
 
         // neighbours outcoming buffers
-        Array<ArithmeticType> send_buffers;
+        Array<ArithmeticType, Device> send_buffers;
 
         // identify neighbour ranks
         void Set_neighbour_ranks();
@@ -75,7 +75,7 @@ class Domain
 
     public:
 
-        // initializion
+        // initialization
         Domain(const uint, const uint, const uint *);
 
         // deallocation

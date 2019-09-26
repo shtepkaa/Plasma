@@ -32,13 +32,10 @@ class Patch
         uint ghost_width;
 
         // adjacent patches in lexicographic order
-        Patch * neighbours;
-
-        // host data
-        double * host_data;
+        Array<uint> neighbour_indices;
 
         // device data
-        void * dev_data;
+        Array<ArithmeticType, Device> data;
 
         // identify hilbert index
         uint Get_index();

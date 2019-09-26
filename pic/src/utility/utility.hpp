@@ -3,22 +3,6 @@
 
 namespace maxwell {
 
-/// possibly needed ///
-
-/// possibly needed /// template<typename Type>
-/// possibly needed /// void Init_array(const uint size, const Type & arg, Type *& res)
-/// possibly needed /// {
-/// possibly needed ///     res = (Type *)realloc(res, size * sizeof(Type));
-/// possibly needed ///     copy(size, arg, 0, res, 1);
-/// possibly needed /// }
-/// possibly needed /// 
-/// possibly needed /// template<typename Type>
-/// possibly needed /// void Init_array(const uint, const Type * args, Type *& res)
-/// possibly needed /// {
-/// possibly needed ///     res = (Type *)realloc(res, size * sizeof(Type));
-/// possibly needed ///     copy(size, args, 1, res, 1);
-/// possibly needed /// }
-
 //============================================================================//
 //  Data management
 //============================================================================//
