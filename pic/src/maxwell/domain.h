@@ -6,10 +6,10 @@
 namespace maxwell {
 
 //============================================================================//
-//  GhostIdentifier
+//  GhostMarkup
 //============================================================================//
 // markup structure
-struct GhostIdentifier
+struct GhostMarkup
 {
     uint send_ind;
     uint recv_ind;
@@ -21,7 +21,7 @@ struct GhostIdentifier
 //============================================================================//
 //  Domain
 //============================================================================//
-template<Dim, Order, ArithmeticType>
+template<Dim dim, Order, ArithmeticType Type>
 class Domain
 {
     private:
@@ -36,10 +36,10 @@ class Domain
         Array<uint> neighbour_ranks;
 
             /// // Cartesian grid coordinates
-            /// uint * grid_coords;
+            /// uint grid_coords[dim];
 
         // patch Cartesian grid sizes
-        uint * patch_sizes;
+        uint patch_sizes[dim];
 
         // patches Hilbert index range
         uint patch_min_index;
@@ -52,16 +52,16 @@ class Domain
         Array<Patch> patches;
 
         // neighbours incoming buffers markup
-        Array< Array<GhostIdentifier> > recv_buffer_markups;
+        Array< Array<GhostMarkup> > recv_buffer_markups;
 
         // neighbours incoming buffers
-        Array<ArithmeticType, Device> recv_buffers;
+        Array<Type> recv_buffers;
 
         // neighbours outcoming buffers markup
-        Array< Array<GhostIdentifier> > send_buffer_markups;
+        Array< Array<GhostMarkup> > send_buffer_markups;
 
         // neighbours outcoming buffers
-        Array<ArithmeticType, Device> send_buffers;
+        Array<Type> send_buffers;
 
         // identify neighbour ranks
         void Set_neighbour_ranks();
@@ -89,7 +89,7 @@ class Domain
         inline uint Get_patch_max_index() const { return patch_max_index; }
 
         // copy patch to CPU
-        void Copy_patch(const uint, ArithmeticType *) const;
+        void Copy_patch(const uint, const Type *) const;
 };
 
 } // namespace maxwell

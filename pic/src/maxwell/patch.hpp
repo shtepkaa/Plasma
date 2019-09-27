@@ -3,37 +3,38 @@
 
 /// FIXME /// #include "types.h"
 
+
+template<int N>
+struct Factorial {
+  enum { value = N * Factorial<N - 1>::value };
+};
+
+template<>
+struct Factorial<0> {
+  enum { value = 1 };
+};
+
 namespace maxwell {
 
 //============================================================================//
+//  Identify_indices
+//============================================================================//
 template<Dim>
-void Patch::Get_index()
+void Patch::Identify_indices()
 {
     /// TODO ///
 }
 
 //============================================================================//
-template<Dim>
-void Patch::Get_neighbours()
-{
-    /// TODO ///
-}
-
-//============================================================================//
-template<Dim>
-Patch::Patch()
-{
-    /// IS REQUIRED? ///
-}
-
+//  Initialization
 //============================================================================//
 template<Dim dim>
-Patch::Patch(const uint * coords, const uint * sizes)
-{
-    Init_array(dim, grid_coords, coords);
-    Init_array(dim, grid_sizes, sizes);
-}
+Patch::Patch(const uint rank, const uint * coords, const uint * sizes):
+    neighbour_indices(), grid_coords(dim, coords), grid_sizes(dim, sizes)
+{}
 
+//============================================================================//
+//  Deallocation
 //============================================================================//
 template<Dim>
 Patch::~Patch()
@@ -42,9 +43,7 @@ Patch::~Patch()
 }
 
 //============================================================================//
-template<Dim>
-void Patch::Set_rank(const uint r) { rank = r; }
-
+//  Get_ghost
 //============================================================================//
 template<Dim dim>
 void Patch::Get_ghost(const uint pos)

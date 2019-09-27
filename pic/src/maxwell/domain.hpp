@@ -7,19 +7,27 @@
 
 namespace maxwell {
 
+//============================================================================//
+//  Set_neighbour_ranks
+//============================================================================//
 // identify neighbour ranks
 template<Dim dim>
 void Domain::Set_neighbour_ranks()
 {
 }
 
-// identify border patch indices
+//============================================================================//
+//  Set_border_patch_indices
+//============================================================================//
+// identifies border patch indices
 template<Dim dim>
 void Domain::Set_border_patch_indices()
 {
 }
 
-// initialize
+//============================================================================//
+//  Initialization
+//============================================================================//
 template<Dim dim>
 Domain::Domain(const uint min_index, const uint max_index, const uint * sizes):
     rank(0),
@@ -43,7 +51,9 @@ Domain::Domain(const uint min_index, const uint max_index, const uint * sizes):
     }
 }
 
-// deallocate
+//============================================================================//
+//  Deallocation
+//============================================================================//
 template<Dim dim>
 Domain::~Domain()
 {
