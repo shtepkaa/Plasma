@@ -1,19 +1,13 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#ifdef __CUDACC__
-#define HOST_DEVICE  __host__ __device__
-#else
-#define HOST_DEVICE
-#endif
-
 namespace maxwell {
 
 //============================================================================//
 //  Array
 //============================================================================//
 // Container type
-template<typename Type, Device>
+template<typename Type>
 class Array
 {
     private:
@@ -47,8 +41,8 @@ class Array
             /// ifdef capacity /// uint Get_capacity() const { return capacity; }
 
         // element access
-        HOST_DEVICE Type & operator[](const uint ind) { return data[ind]; }
-        HOST_DEVICE const Type & operator[](const uint ind) const { return data[ind]; }
+        inline Type & operator[](const uint i) { return data[i]; }
+        inline const Type & operator[](const uint i) const { return data[i]; }
 
         inline const Type * Export_data() const { return data; }
 };
