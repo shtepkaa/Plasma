@@ -28,17 +28,18 @@ void Array::Reallocate(const uint siz)
 }
 
 template<typename Type>
-Array::Copy(const uint siz, const Type & val)
+void Array::Copy(const uint siz, const Type & val)
 {
     Reallocate(siz);
     copy(size, &val, 0, data, 1);
 }
 
 template<typename Type>
-Array::Copy(const uint siz, const Type * dat)
+void Array::Copy(const uint siz, const Type * dat)
 {
     Reallocate(siz);
-    copy(size, dat, 1, data, 1);
+    if (dat) { copy(size, dat, 1, data, 1); }
+    else { data[0] = 0; copy(size, data, 0, data, 1); }
 }
 
 template<typename Type>
@@ -58,10 +59,32 @@ Array::Array(const uint siz, const Type & val): size(0), data(NULL)
 }
 
 template<typename Type>
-Array::Array(const uint siz, const Type * dat = NULL): size(0), data(NULL)
+Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
 {
     if (dat) { Copy(siz, dat); }
     else { Reallocate(siz); }
+}
+
+//============================================================================//
+//  Element mutate
+//============================================================================//
+template<typename Type>
+Type & Array::operator[](const uint ind)
+{
+    /// FIXME /// what to do with negative?
+    if (data && ind >= 0 && ind < size) { }
+    else { Reallocate(); return ; }
+    
+    return data[ind]; 
+}
+
+//============================================================================//
+//  Element access
+//============================================================================//
+template<typename Type>
+const Type & Array::operator[](const uint i) const
+{
+    return (data && ind >= 0 && ind < size)? data[ind]: 0;
 }
 
 } // namespace maxwell

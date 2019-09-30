@@ -12,7 +12,7 @@ static void Identify_descend_order(const uint *, uint *);
 //  Bit access
 //============================================================================//
 static uint Get_bit(const uint i, const uint k) { return (i >> k) & 1U; }
-static void Set_bit(uint & i, const uint k, const uint value);
+static void Set_bit(uint &, const uint, const uint);
 
 //============================================================================//
 //  Bitwise cyclic left rotation 

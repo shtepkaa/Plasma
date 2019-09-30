@@ -16,11 +16,14 @@ class Patch
         // MPI rank
         uint rank;
 
-        // Hilbert index
-        uint index;
+            /// // Hilbert index
+            /// uint index;
 
-        // adjacent patches in lexicographic order
-        Array<uint> neighbour_indices;
+            /// // adjacent patch type counts
+            /// uint neighbour_type_counts[dim];
+
+        // vicinity Hilbert indices in lexicographic order
+        Array<uint> indices;
 
         // Cartesian grid coordinates
         uint grid_coords[dim];
@@ -55,8 +58,8 @@ class Patch
         // set MPI rank
         inline void Set_rank(const uint r) { rank = r; }
 
-        // obtain ghost
-        void Get_ghost(const uint);
+        // get own Hilbert index
+        uint Get_index() const { return indices[indices.Get_size() >> 1]; }
 };
 
 } // namespace maxwell
