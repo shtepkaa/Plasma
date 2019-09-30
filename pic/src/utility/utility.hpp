@@ -39,7 +39,6 @@ void Array::Copy(const uint siz, const Type * dat)
 {
     Reallocate(siz);
     if (dat) { copy(size, dat, 1, data, 1); }
-    else { data[0] = 0; copy(size, data, 0, data, 1); }
 }
 
 template<typename Type>
@@ -63,28 +62,6 @@ Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
 {
     if (dat) { Copy(siz, dat); }
     else { Reallocate(siz); }
-}
-
-//============================================================================//
-//  Element mutate
-//============================================================================//
-template<typename Type>
-Type & Array::operator[](const uint ind)
-{
-    /// FIXME /// what to do with negative?
-    if (data && ind >= 0 && ind < size) { }
-    else { Reallocate(); return ; }
-    
-    return data[ind]; 
-}
-
-//============================================================================//
-//  Element access
-//============================================================================//
-template<typename Type>
-const Type & Array::operator[](const uint i) const
-{
-    return (data && ind >= 0 && ind < size)? data[ind]: 0;
 }
 
 } // namespace maxwell

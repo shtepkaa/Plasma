@@ -5,6 +5,13 @@
 
 namespace maxwell {
 
+struct PatchId
+{
+    uint rank;
+    uint index;
+    uint size;
+};
+
 //============================================================================//
 //  Patch
 //============================================================================//
@@ -13,8 +20,8 @@ class Patch
 {
     private:
 
-        // MPI rank
-        uint rank;
+            /// // MPI rank
+            /// uint rank;
 
             /// // Hilbert index
             /// uint index;
@@ -23,7 +30,7 @@ class Patch
             /// uint neighbour_type_counts[dim];
 
         // vicinity Hilbert indices in lexicographic order
-        Array<uint> indices;
+        Array<PatchId> indices;
 
         // Cartesian grid coordinates
         uint grid_coords[dim];
