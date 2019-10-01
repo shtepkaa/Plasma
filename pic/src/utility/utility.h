@@ -4,6 +4,11 @@
 namespace maxwell {
 
 //============================================================================//
+//  Power
+//============================================================================//
+uint Power(const uint, const uint);
+
+//============================================================================//
 //  Sub_hypercube_count
 //============================================================================//
 /// FIXME /// probably switch to c++11 constexpr function
@@ -15,7 +20,7 @@ uint Sub_hypercube_count(const uint, const uint);
 //============================================================================//
 /// FIXME /// probably switch to c++11 constexpr function
 // Counts total amount of sub-hypercubes in cube
-uint Total_hypercube_count(const uint);
+uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
 
 //============================================================================//
 //  Array

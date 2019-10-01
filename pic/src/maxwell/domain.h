@@ -14,8 +14,8 @@ struct GhostMarkup
     uint send_ind;
     uint recv_ind;
 
-    uint size;
     uint start;
+    uint size;
 };
 
 //============================================================================//

@@ -7,8 +7,14 @@ namespace maxwell {
 
 struct PatchId
 {
-    uint rank;
+    /// // MPI rank
+    /// uint rank;
+
+    // Hilbert index
     uint index;
+
+    // data markup
+    uint start;
     uint size;
 };
 
@@ -20,23 +26,17 @@ class Patch
 {
     private:
 
-            /// // MPI rank
-            /// uint rank;
-
-            /// // Hilbert index
-            /// uint index;
-
             /// // adjacent patch type counts
             /// uint neighbour_type_counts[dim];
 
-        // vicinity Hilbert indices in lexicographic order
-        Array<PatchId> indices;
+        // vicinity patch identifiers in lexicographic order
+        Array<PatchId> ids;
 
         // Cartesian grid coordinates
-        uint grid_coords[dim];
+        uint coords[dim];
 
         // Cartesian grid sizes
-        uint grid_sizes[dim];
+        uint sizes[dim];
 
         // ghost width
         uint ghost_width;
@@ -47,7 +47,7 @@ class Patch
         // device data
         Type * data;
 
-        // identify own and neighbour hilbert indices
+        // identify own and neighbour Hilbert indices
         void Identify_indices();
 
         /// FIXME /// Either remove or switch to c++11: = delete
@@ -65,8 +65,8 @@ class Patch
         // set MPI rank
         inline void Set_rank(const uint r) { rank = r; }
 
-        // get own Hilbert index
-        uint Get_index() const { return indices[indices.Get_size() >> 1]; }
+        /// // get own id
+        /// const PatchId & Get_id() const { return ids[ids.Get_size() >> 1]; }
 };
 
 } // namespace maxwell

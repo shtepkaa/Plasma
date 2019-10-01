@@ -9,7 +9,7 @@ namespace maxwell {
 //  Identify_indices
 //============================================================================//
 template<Dim>
-void Patch::Identify_indices()
+void Patch::Identify_ids()
 {
     /// TODO ///
 }
@@ -23,7 +23,8 @@ Patch::Patch(
     const uint * dim_exps,
     const uint * coords,
     const uint * sizes,
-    const uint width
+    const uint width,
+    const Array<uint> & domain_decomp
 ):
     rank(rk),
     /// index(Get_hilbert_index<dim>(dim_exps, coords)),
@@ -53,14 +54,14 @@ Patch::~Patch()
     /// TODO ///
 }
 
-//============================================================================//
-//  Get_ghost
-//============================================================================//
-template<Dim dim>
-void Patch::Get_ghost(const uint pos)
-{
-    /// TODO ///
-}
+/// //============================================================================//
+/// //  Get_ghost
+/// //============================================================================//
+/// template<Dim dim>
+/// void Patch::Get_ghost(const uint pos)
+/// {
+///     /// TODO ///
+/// }
 
 } // namespace maxwell
 
