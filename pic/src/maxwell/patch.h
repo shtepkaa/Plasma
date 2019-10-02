@@ -7,15 +7,15 @@ namespace maxwell {
 
 struct PatchId
 {
-    /// // MPI rank
-    /// uint rank;
+    // MPI rank
+    uint rank;
 
     // Hilbert index
     uint index;
 
     // data markup
-    uint start;
     uint size;
+    uint start;
 };
 
 //============================================================================//
