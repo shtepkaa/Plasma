@@ -8,6 +8,21 @@
 namespace maxwell {
 
 //============================================================================//
+//  BufferMarking
+//============================================================================//
+// implements buffer marking 
+template<Dim dim>
+struct BufferMarking
+{
+    uint send_index;
+    uint recv_index;
+
+    uint sizes[dim];
+
+    uint offset;
+};
+
+//============================================================================//
 //  Domain
 //============================================================================//
 // Implements data structure per process
@@ -34,7 +49,7 @@ class Domain
             uint patch_sizes[dim];
 
         // patches arranged in specified Order
-        Array<Patch> patches;
+        Array<Patch *> patches;
 
         // local buffer marking
         Array<GhostMarking> local_buffer_markings;

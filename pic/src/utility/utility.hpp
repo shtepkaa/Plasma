@@ -4,6 +4,27 @@
 namespace maxwell {
 
 //============================================================================//
+//  Copy
+//============================================================================//
+// Implements BLAS-like copy,
+// works correctly for copy-constructible types
+template<typename Type>
+/* ??? __host__ __device__*/ void Copy(
+    const uint dim,
+    const Type * src,
+    const uint inc_src,
+    Type * dst,
+    const uint inc_dst
+)
+{
+/* #pragma omp parallel for */
+    for (uint s = 0, d = 0; d < dim; s += inc_src, d += inc_dst)
+    {
+        dst[d] = src[s];
+    }
+}
+
+//============================================================================//
 //  Data management
 //============================================================================//
 /// ifdef capacity /// template<typename Type>

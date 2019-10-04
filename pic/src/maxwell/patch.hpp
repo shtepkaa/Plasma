@@ -19,49 +19,25 @@ void Patch::Identify_ids()
 //============================================================================//
 template<Dim dim>
 Patch::Patch(
-    const uint rk,
-    const uint * dim_exps,
+    const uint * exps,
     const uint * coords,
     const uint * sizes,
-    const uint width,
-    const Array<uint> & domain_decomp
+    const uint width
 ):
-    rank(rk),
-    /// index(Get_hilbert_index<dim>(dim_exps, coords)),
-    indices(Total_hypercube_count(dim)),
     ghost_width(width),
-    data_size(1),
-    data(NULL)
+    data(NULL),
+    markings(Total_hypercube_count(dim))
 {
+    /// FIXME /// -> use Tuple in initializer list /// copy(dim, exps, 1, grid_exps, 1);
+    /// FIXME /// -> use Tuple in initializer list /// copy(dim, coords, 1, grid_coords, 1);
+    /// FIXME /// -> use Tuple in initializer list /// copy(dim, sizes, 1, grid_sizes, 1);
+    /// FIXME /// -> use Tuple in initializer list /// axpy(dim, 2 * width, sizes, 1, actual_sizes, 1);
 
     for (uint i = 0; i < indices.Get_size(); ++i)
     {
-        Get_hilbert_index<dim>(dim_exps, coords)
+        markings.index = Get_hilbert_index<dim>(grid_exps, grid_coords);
     }
-
-    for (uint d = 0; d < dim; ++d) { data_size *= sizes[d] + 2 * width; }
-
-    copy(dim, grid_coords, 1, coords, 1);
-    copy(dim, grid_sizes, 1, sizes, 1);
 }
-
-//============================================================================//
-//  Deallocation
-//============================================================================//
-template<Dim>
-Patch::~Patch()
-{
-    /// TODO ///
-}
-
-/// //============================================================================//
-/// //  Get_ghost
-/// //============================================================================//
-/// template<Dim dim>
-/// void Patch::Get_ghost(const uint pos)
-/// {
-///     /// TODO ///
-/// }
 
 } // namespace maxwell
 

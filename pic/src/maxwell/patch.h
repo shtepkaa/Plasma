@@ -6,20 +6,18 @@
 namespace maxwell {
 
 //============================================================================//
-//  GhostMarking
+//  PatchMarking
 //============================================================================//
-// marking structure
+// implements patch marking
 template<Dim dim>
-struct GhostMarking
+struct PatchMarking
 {
-    uint send_ind;
-    uint recv_ind;
+    uint index;
 
     uint sizes[dim];
-    uint lead_sizes[dim];
 
-    Type * send_ghost;
-    Type * recv_ghost;
+    uint send_offset;
+    uint recv_offset;
 };
 
 //============================================================================//
@@ -30,20 +28,26 @@ class Patch
 {
     private:
 
-        // vicinity patch markings in lexicographic order
-        Array<GhostMarking> markings;
+        // Cartesian patch coordinates
+        uint grid_exps[dim];
 
         // Cartesian patch coordinates
-        uint coords[dim];
+        uint grid_coords[dim];
 
         // nominal sizes: excluding ghosts
-        uint sizes[dim];
+        uint grid_sizes[dim];
 
         // ghost width
         uint ghost_width;
 
-        // actual data size: including ghosts
-        uint data_size;
+        // actual sizes: including ghosts
+        uint actual_sizes[dim];
+
+            /// // actual data size: including ghosts
+            /// uint data_size;
+
+        // vicinity patch markings in lexicographic order
+        Array<GhostMarking> markings;
 
         // __device__
         // patch data including ghosts
@@ -59,15 +63,15 @@ class Patch
     public:
 
         // initialize
-        Patch(const uint, const uint *, const uint *);
+        Patch(const * uint, const * uint, const * uint, const uint);
 
         // deallocate
-        ~Patch();
+        ~Patch() { cudaFree(data); }
 
             /// // get own id
             /// const PatchId & Get_id() const { return ids[ids.Get_size() >> 1]; }
 
-        const Array<uint> & Get_markings() const { return markings; }
+        const Array<GhostMarking> & Get_markings() const { return markings; }
 };
 
 } // namespace maxwell
