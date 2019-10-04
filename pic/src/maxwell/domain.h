@@ -1,22 +1,11 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-/// #include <vector>
+/// #include ""
+
+/// #include <>
 
 namespace maxwell {
-
-//============================================================================//
-//  GhostMarking
-//============================================================================//
-// marking structure
-struct GhostMarking
-{
-    uint send_ind;
-    uint recv_ind;
-
-    uint offset;
-    uint size;
-};
 
 //============================================================================//
 //  Domain
@@ -24,25 +13,25 @@ struct GhostMarking
 // Implements data structure per process
 // corresponds to single MPI rank
 /// >>> /// implementation should probably be changed to singleton class
-template<Dim dim, Order, ArithmeticType Type>
+template<Dim dim, /* ??? Order ord,*/ ArithmeticType Type>
 class Domain
 {
     private:
 
         // MPI rank
-        static uint rank;
+        uint rank;
 
         // global range of ranks
-        static uint range;
+        uint range;
 
         // grid Hilbert index decomposition
-        static uint domain_bounds[];
+        Array<uint> domain_bounds;
 
         // neighbour ranks
         Array<uint> neighbour_ranks;
 
-        // patch Cartesian grid sizes
-        uint patch_sizes[dim];
+            // patch Cartesian grid sizes
+            uint patch_sizes[dim];
 
         // patches arranged in specified Order
         Array<Patch> patches;
@@ -53,21 +42,23 @@ class Domain
         // neighbours incoming buffers marking
         Array< Array<GhostMarking> > recv_buffer_markings;
 
-        /// >>> /// should probably (re)allocate independantly
-        /// >>> /// for different buffers
+        // should probably (re)allocate independantly
+        // for different buffers
             /// // neighbours incoming buffers
             /// Array<uint> recv_buffers;
-        // device: neighbours incoming buffers
+        // __device__
+        // neighbours incoming buffers
         Array<Type *> recv_buffers;
 
         // neighbours outcoming buffers marking
         Array< Array<GhostMarking> > send_buffer_markings;
 
-        /// >>> /// should probably (re)allocate independantly
-        /// >>> /// for different buffers
+        // should probably (re)allocate independantly
+        // for different buffers
             /// // neighbours outcoming buffers
             /// Array<uint> send_buffers;
-        // device: neighbours outcoming buffers
+        // __device__
+        // neighbours outcoming buffers
         Array<Type *> send_buffers;
 
         // identify neighbour ranks

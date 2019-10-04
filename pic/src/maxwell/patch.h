@@ -5,17 +5,21 @@
 
 namespace maxwell {
 
-struct PatchId
+//============================================================================//
+//  GhostMarking
+//============================================================================//
+// marking structure
+template<Dim dim>
+struct GhostMarking
 {
-    // MPI rank
-    uint rank;
+    uint send_ind;
+    uint recv_ind;
 
-    // Hilbert index
-    uint index;
+    uint sizes[dim];
+    uint lead_sizes[dim];
 
-    // data markup
-    uint size;
-    uint start;
+    Type * send_ghost;
+    Type * recv_ghost;
 };
 
 //============================================================================//
@@ -26,29 +30,27 @@ class Patch
 {
     private:
 
-            /// // adjacent patch type counts
-            /// uint neighbour_type_counts[dim];
+        // vicinity patch markings in lexicographic order
+        Array<GhostMarking> markings;
 
-        // vicinity patch identifiers in lexicographic order
-        Array<PatchId> ids;
-
-        // Cartesian grid coordinates
+        // Cartesian patch coordinates
         uint coords[dim];
 
-        // Cartesian grid sizes
+        // nominal sizes: excluding ghosts
         uint sizes[dim];
 
         // ghost width
         uint ghost_width;
 
-        // device data size
+        // actual data size: including ghosts
         uint data_size;
 
-        // device data
+        // __device__
+        // patch data including ghosts
         Type * data;
 
         // identify own and neighbour Hilbert indices
-        void Identify_indices();
+        void Construct_markings();
 
         /// FIXME /// Either remove or switch to c++11: = delete
         // default initializer
@@ -62,11 +64,10 @@ class Patch
         // deallocate
         ~Patch();
 
-        // set MPI rank
-        inline void Set_rank(const uint r) { rank = r; }
+            /// // get own id
+            /// const PatchId & Get_id() const { return ids[ids.Get_size() >> 1]; }
 
-        /// // get own id
-        /// const PatchId & Get_id() const { return ids[ids.Get_size() >> 1]; }
+        const Array<uint> & Get_markings() const { return markings; }
 };
 
 } // namespace maxwell
