@@ -33,11 +33,11 @@ uint Sub_hypercube_count(const uint, const uint);
 // Counts total amount of sub-hypercubes in cube
 uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
 
-//============================================================================//
-//  Total_hypercube_count
-//============================================================================//
-template<Dim dim>
-uint & Shift(const uint);
+/// //============================================================================//
+/// //  Total_hypercube_count
+/// //============================================================================//
+/// template<Dim dim>
+/// uint & Shift(const uint);
 
 //============================================================================//
 //  Tuple
@@ -51,23 +51,26 @@ struct Tuple
     // set
     void Set(const Type & val) { Copy(size, &val, 0, data, 1); }
     void Set(const Type * dat = NULL) { data[0] = 0; Copy(size, data, 0, data, 1); }
-    void Set(const Tuple & tup) { Copy(); }
+    void Set(const Tuple & tup) { Copy(size, tup.data, 1, data, 1); }
 
     // initialization
-    Tuple() { data[0] = 0; Copy(size, data, 0, data, 1); }
     Tuple(const Type & val) { Set(val); }  
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
 
-    Tuple & operator=(const Tuple & tup) { Copy(tup); return *this; }
+    // conversion
+    inline operator const Type *() { return data; } 
+
+    // neighbour creation
+    inline Tuple & operator()(const uint);
+
+    Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
 
     // field access
     inline uint Get_size() const { return size; }
 
-    // element mutate
+    // element set / get
     inline Type & operator[](const uint ind) { return data[ind]; }
-
-    // element access
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
 
