@@ -37,7 +37,7 @@ void Hilbert_index_inverse(
 //  General Hilbert index
 //============================================================================//
 template<Dim d>
-uint General_hilbert_index(const uint *, const int *)
+uint General_Hilbert_index(const uint *, const int *)
 {
     if (d == 1D)
     {
@@ -49,7 +49,7 @@ uint General_hilbert_index(const uint *, const int *)
 }
 
 template<Dim d>
-void General_hilbert_index_inverse(const uint *, uint *, const uint)
+void General_Hilbert_index_inverse(const uint *, uint *, const uint)
 {
     if (d == 1D)
     {

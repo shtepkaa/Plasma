@@ -2,41 +2,64 @@
 #define PATCH_HPP
 
 /// FIXME /// #include "types.h"
+/// FIXME /// #include "utility.h"
 
 namespace maxwell {
 
 //============================================================================//
-//  Identify_indices
+//  Construct markings
 //============================================================================//
-template<Dim>
-void Patch::Identify_ids()
+template<Dim dim>
+void Patch::Initialize_markings()
 {
-    /// TODO ///
+    Tuple<dim> shifts;
+
+    for (uint s = 0; s < ghost_markings.Get_size(); ++s)
+    {
+        uint index = s;
+
+        for (uint d = 0; d < dim - 1; ++d)
+        {
+            shifts[d] += (index % 3) - 1;
+            index /= 3;
+        }
+
+        shifts[dim - 1] += index - 1;
+
+        // now all shifts are in { ~0, 0, 1 }
+
+        ghost_markings[s].index
+            = General_Hilbert_index<dim>(grid_exps, grid_coords + shifts);
+
+        for (uint d = 0; d < dim - 1; ++d)
+        {
+            ghost_markings[s].sizes[d]
+                = (shifts[s])? grid_sizes[shifts[s] + 1]: ghost_width;
+        }
+    }
 }
 
 //============================================================================//
-//  Initialization
+//  Constructor
 //============================================================================//
-template<Dim dim>
+template<Dim dim, typename Type>
 Patch::Patch(
-    const uint * exps,
-    const uint * coords,
-    const uint * sizes,
+    const Tuple<dim> & exps,
+    const Tuple<dim> & coords,
+    const Tuple<dim> & sizes,
     const uint width
 ):
+    grid_exps(exps),
+    grid_coords(coords),
+    grid_sizes(sizes),
     ghost_width(width),
-    data(NULL),
-    markings(Total_hypercube_count(dim))
+    actual_sizes(sizes += 2 * width),
+    markings(Total_hypercube_count(dim)),
+    data_size(Product<dim>(actual_sizes)),
+    data(NULL)
 {
-    /// FIXME /// -> use Tuple in initializer list /// copy(dim, exps, 1, grid_exps, 1);
-    /// FIXME /// -> use Tuple in initializer list /// copy(dim, coords, 1, grid_coords, 1);
-    /// FIXME /// -> use Tuple in initializer list /// copy(dim, sizes, 1, grid_sizes, 1);
-    /// FIXME /// -> use Tuple in initializer list /// axpy(dim, 2 * width, sizes, 1, actual_sizes, 1);
-
-    for (uint i = 0; i < indices.Get_size(); ++i)
-    {
-        markings.index = Get_hilbert_index<dim>(grid_exps, grid_coords);
-    }
+    Construct_markings();
+    cudaMalloc(&data, data_size * sizeof(Type));
 }
 
 } // namespace maxwell

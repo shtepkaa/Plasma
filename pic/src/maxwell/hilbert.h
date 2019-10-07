@@ -11,7 +11,7 @@ static void Identify_descend_order(const uint *, uint *);
 //============================================================================//
 //  Bit access
 //============================================================================//
-static uint Get_bit(const uint i, const uint k) { return (i >> k) & 1U; }
+static uint Get_bit(const uint num, const uint pos) { return (num >> pos) & 1; }
 static void Set_bit(uint &, const uint, const uint);
 
 //============================================================================//
@@ -23,7 +23,7 @@ static uint Rotate_right(const uint, const uint, const uint);
 //============================================================================//
 //  Binary reflected Gray code
 //============================================================================//
-static uint Gray_code(const uint i) { return i ^ (i >> 1); }
+static uint Gray_code(const uint num) { return num ^ (num >> 1); }
 static uint Gray_code_inverse(const uint);
 
 //============================================================================//
@@ -32,7 +32,7 @@ static uint Gray_code_inverse(const uint);
 static uint Trailing_set_bit(const uint);
 
 //============================================================================//
-//  Direction and entry for intra su-hypercube
+//  Direction and entry for intra sub-hypercube
 //============================================================================//
 static uint Direction(const uint, const uint);
 static uint Entry(const uint);
@@ -46,12 +46,14 @@ static void Transform_inverse(const uint, const uint, uint &, const uint);
 //============================================================================//
 //  Hilbert index
 //============================================================================//
-static uint Hilbert_index_orientation(const uint, const uint *, uint &, uint &);
+static uint Hilbert_index_orientation(
+    const uint, const uint *, uint &, uint &
+);
 
-template<Dim>
+template<Dim dim>
 uint Hilbert_index(const uint, const uint *, const uint, const uint);
 
-template<Dim>
+template<Dim dim>
 void Hilbert_index_inverse(
     const uint, uint *, const uint, const uint, const uint
 );
@@ -59,15 +61,15 @@ void Hilbert_index_inverse(
 //============================================================================//
 //  General Hilbert index
 //============================================================================//
-static uint General_hilbert_index_orientation(
-    const uint *, const int *, uint &, uint &
+static uint General_Hilbert_index_orientation(
+    const uint *, const uint *, uint &, uint &
 );
 
-template<Dim>
-uint General_hilbert_index(const uint *, const int *);
+template<Dim dim>
+uint General_Hilbert_index(const uint *, const uint *);
 
-template<Dim>
-void General_hilbert_index_inverse(const uint *, uint *, const uint);
+template<Dim dim>
+void General_Hilbert_index_inverse(const uint *, uint *, const uint);
 
 } // namespace maxwell
 

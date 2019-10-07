@@ -5,13 +5,29 @@
 
 namespace maxwell {
 
+/*******************************************************************************
+*
+*   BLAS-like generic functions
+*
+*******************************************************************************/
 //============================================================================//
 //  Copy
 //============================================================================//
 // Implements BLAS-like Copy,
-// works correctly for Copy-constructible types
+// works correctly for copy-constructible types
 template<typename Type>
 void Copy(const uint, const Type *, const uint, Type *, const uint);
+
+//============================================================================//
+//  Axpy
+//============================================================================//
+// Implements BLAS-like Axpy,
+// works correctly for copy-constructible types,
+// allowing compound assignment and multiplication operators
+template<typename Type>
+void Axpy(
+    const uint, const Type &, const Type *, const uint, Type *, const uint
+);
 
 //============================================================================//
 //  Power
@@ -33,50 +49,49 @@ uint Sub_hypercube_count(const uint, const uint);
 // Counts total amount of sub-hypercubes in cube
 uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
 
-/// //============================================================================//
-/// //  Total_hypercube_count
-/// //============================================================================//
-/// template<Dim dim>
-/// uint & Shift(const uint);
-
-//============================================================================//
-//  Tuple
-//============================================================================//
+/*******************************************************************************
+*
+*   Tuple
+*
+*******************************************************************************/
 // Contains tuple of given type 
+// works correctly for Copy-constructible types
+// allowing conversion from 0 and 1
 template<uint size, typename Type = uint>
 struct Tuple
 {
+    friend Tuple operator+(Tuple, const Tuple &);
+    friend Type Product(const Tuple &);
+
     Type data[size];
 
-    // set
+    // initialization
     void Set(const Type & val) { Copy(size, &val, 0, data, 1); }
-    void Set(const Type * dat = NULL) { data[0] = 0; Copy(size, data, 0, data, 1); }
+    void Set(const Type * = NULL);
     void Set(const Tuple & tup) { Copy(size, tup.data, 1, data, 1); }
 
-    // initialization
     Tuple(const Type & val) { Set(val); }  
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
 
-    // conversion
-    inline operator const Type *() { return data; } 
-
-    // neighbour creation
-    inline Tuple & operator()(const uint);
-
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
 
-    // field access
-    inline uint Get_size() const { return size; }
+    Tuple & operator+=(const Type &);
+    Tuple & operator+=(const Tuple &);
+
+    // conversion
+    inline operator const Type *() const { return data; } 
 
     // element set / get
     inline Type & operator[](const uint ind) { return data[ind]; }
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
 
-//============================================================================//
-//  Array
-//============================================================================//
+/*******************************************************************************
+*
+*   Array
+*
+*******************************************************************************/
 // Contains host array of given type
 template<typename Type>
 class Array
@@ -92,18 +107,17 @@ class Array
         // data management
         void Reallocate(const uint = 0);
 
-        // set
-        void Copy(const uint, const Type &);
-        void Copy(const uint, const Type * = NULL);
-        void Copy(const Array &);
-
         // initialization
+        void Set(const uint, const Type &);
+        void Set(const uint, const Type * = NULL);
+        void Set(const Array &);
+
         Array(): size(0), data(NULL) {}
         Array(const uint, const Type &);
         Array(const uint, const Type * = NULL);
-        Array(const Array & arr): size(0), data(NULL) { Copy(arr); }
+        Array(const Array & arr): size(0), data(NULL) { Set(arr); }
 
-        Array & operator=(const Array & arr) { Copy(arr); return *this; }
+        Array & operator=(const Array & arr) { Set(arr); return *this; }
 
         // deallocation
         ~Array() { Reallocate(); }
@@ -111,12 +125,11 @@ class Array
         // field access
         inline uint Get_size() const { return size; }
 
-        // element mutate
-        inline Type & operator[](const uint i) { return data[i]; }
+        // element set / get
+        inline Type & operator[](const uint in) { return data[in]; }
+        inline const Type & operator[](const uint in) const { return data[in]; }
 
-        // element access
-        inline const Type & operator[](const uint i) const { return data[i]; }
-
+        // data access
         inline const Type * Export_data() const { return data; }
 };
 
