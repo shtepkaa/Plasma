@@ -29,6 +29,11 @@ void Axpy(
     const uint, const Type &, const Type *, const uint, Type *, const uint
 );
 
+/*******************************************************************************
+*
+*   Sub-hypercube counting functions
+*
+*******************************************************************************/
 //============================================================================//
 //  Power
 //============================================================================//
@@ -76,13 +81,14 @@ struct Tuple
 
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
 
-    Tuple & operator+=(const Type &);
-    Tuple & operator+=(const Tuple &);
-
     // conversion
     inline operator const Type *() const { return data; } 
 
-    // element set / get
+    // compound addition
+    Tuple & operator+=(const Type &);
+    Tuple & operator+=(const Tuple &);
+
+    // element mutate / access
     inline Type & operator[](const uint ind) { return data[ind]; }
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
@@ -125,7 +131,7 @@ class Array
         // field access
         inline uint Get_size() const { return size; }
 
-        // element set / get
+        // element mutate / access
         inline Type & operator[](const uint in) { return data[in]; }
         inline const Type & operator[](const uint in) const { return data[in]; }
 
