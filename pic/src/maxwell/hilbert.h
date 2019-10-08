@@ -6,7 +6,7 @@ namespace maxwell {
 //============================================================================//
 //  Identify descend order
 //============================================================================//
-static void Identify_descend_order(const Tuple<3D> &, Tuple<3D> &);
+static void Identify_descend_order(const uint *, uint *);
 
 //============================================================================//
 //  Bit access
@@ -46,35 +46,29 @@ static void Transform_inverse(const uint, const uint, uint &, const uint);
 //============================================================================//
 //  Hilbert index
 //============================================================================//
-static uint Hilbert_index_orientation(
-    const uint, const Tuple<2D> &, uint &, uint &
-);
+static uint Hilbert_index_orientation(const uint, const uint *, uint &, uint &);
 
 template<Dim dim>
-uint Hilbert_index(const uint, const Tuple<dim> &, const uint, const uint);
+static uint Hilbert_index(const uint, const uint *, const uint, const uint);
 
 template<Dim dim>
-void Hilbert_index_inverse(
-    const uint, Tuple<dim> &, const uint, const uint, const uint
+static void Hilbert_index_inverse(
+    const uint, uint *, const uint, const uint, const uint
 );
 
 //============================================================================//
 //  General Hilbert index
 //============================================================================//
 static uint General_Hilbert_index_orientation(
-    const Tuple<2D> &, const Tuple<dim> &, uint &, uint &
+    const uint *, const uint *, uint &, uint &
 );
 
 template<Dim dim>
-uint General_Hilbert_index(const Tuple<dim> &, const Tuple<dim> &);
+uint General_Hilbert_index(const uint *, const uint *);
 
 template<Dim dim>
-void General_Hilbert_index_inverse(
-    const Tuple<dim> &, Tuple<dim> &, const uint
-);
+void General_Hilbert_index_inverse(const uint *, uint *, const uint);
 
 } // namespace maxwell
-
-#include "hilbert.hpp"
 
 #endif // HILBERT_H

@@ -6,7 +6,7 @@ namespace maxwell {
 typedef unsigned int uint;
 
 // dimensionality
-enum Dim: uint { 1D = 1, 2D, 3D };
+enum Dim: uint { OneDim = 1, TwoDim, ThreeDim };
 
 } // namespace maxwell
 

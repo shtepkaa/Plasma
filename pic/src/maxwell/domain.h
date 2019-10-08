@@ -17,7 +17,7 @@ struct BufferMarking
     uint send_index;
     uint recv_index;
 
-    uint sizes[dim];
+    Tuple<dim> sizes;
 
     uint offset;
 };
@@ -25,9 +25,8 @@ struct BufferMarking
 //============================================================================//
 //  Domain
 //============================================================================//
-// Implements data structure per process
-// corresponds to single MPI rank
-/// >>> /// implementation should probably be changed to singleton class
+// Implements data structure per process corresponding to a single MPI rank
+/// >>> /// implementation should probably be changed to a singleton class
 template<Dim dim, /* ??? Order ord,*/ ArithmeticType Type>
 class Domain
 {

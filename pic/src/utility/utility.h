@@ -65,30 +65,47 @@ uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
 template<uint size, typename Type = uint>
 struct Tuple
 {
-    friend Tuple operator+(Tuple, const Tuple &);
-    friend Type Product(const Tuple &);
+    // Subtraction
+    friend Tuple operator-(Tuple, const Type &);
+    friend Tuple operator-(Tuple, const Tuple &);
 
+    // Addition
+    friend Tuple operator+(Tuple, const Type &);
+    friend Tuple operator+(Tuple, const Tuple &);
+
+    // Reduction
+    /// friend Type Sum(const Tuple &, const uint = size);
+    friend Type Product(const Tuple &, const uint = size);
+
+    // Data array
     Type data[size];
 
-    // initialization
+    // Initialization
     void Set(const Type & val) { Copy(size, &val, 0, data, 1); }
     void Set(const Type * = NULL);
     void Set(const Tuple & tup) { Copy(size, tup.data, 1, data, 1); }
 
+    // Constructors
     Tuple(const Type & val) { Set(val); }  
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
 
+    // Assignment
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
 
-    // conversion
-    inline operator const Type *() const { return data; } 
+    // Conversion
+    inline operator Type * const() { return data; } 
+    inline operator Type const * const() const { return data; } 
 
-    // compound addition
+    // Compound assignment by difference
+    Tuple & operator-=(const Type &);
+    Tuple & operator-=(const Tuple &);
+    
+    // Compound assignment by sum
     Tuple & operator+=(const Type &);
     Tuple & operator+=(const Tuple &);
 
-    // element mutate / access
+    // Element mutate / access
     inline Type & operator[](const uint ind) { return data[ind]; }
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
@@ -118,17 +135,19 @@ class Array
         void Set(const uint, const Type * = NULL);
         void Set(const Array &);
 
+        // constructors
         Array(): size(0), data(NULL) {}
         Array(const uint, const Type &);
         Array(const uint, const Type * = NULL);
         Array(const Array & arr): size(0), data(NULL) { Set(arr); }
 
+        // assignment
         Array & operator=(const Array & arr) { Set(arr); return *this; }
 
         // deallocation
         ~Array() { Reallocate(); }
 
-        // field access
+        // size access
         inline uint Get_size() const { return size; }
 
         // element mutate / access

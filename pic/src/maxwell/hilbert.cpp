@@ -1,13 +1,17 @@
 // hilbert.cpp
 
+#include "hilbert.h"
+
 namespace maxwell {
 
 //============================================================================//
-//  Identify descend order
+//  Identify descend order in 3D
 //============================================================================//
-void Identify_descend_order(const Tuple<3D> & arg, Tuple<3D> & order)
+// Finds the descending order of argument entries
+void Identify_descend_order(const uint * arg, uint * order)
 {
-    const uint comp[3] = { arg[1] < arg[2], arg[0] < arg[2], arg[0] < arg[1] };
+    const uint comp[ThreeDim]
+        = { arg[1] < arg[2], arg[0] < arg[2], arg[0] < arg[1] };
 
     order[!comp[0] + !comp[1]] = 2;
     order[comp[0] && comp[1]] = comp[2];
@@ -74,7 +78,8 @@ uint Trailing_set_bit(const uint num)
 //============================================================================//
 //  Direction
 //============================================================================//
-// Computes intra sub-hypercube direction for 0 <= "ind" < 2^{exp}
+// Computes intra sub-hypercube direction for given index
+// (0 <= ind < 2^{exp})
 uint Direction(const uint ind, const uint exp)
 {
     if (!ind) { return 0; }
@@ -85,7 +90,8 @@ uint Direction(const uint ind, const uint exp)
 //============================================================================//
 //  Entry
 //============================================================================//
-// Computes entry point for 0 <= "ind" < 2^{exp}
+// Computes entry point for given index
+// (0 <= ind < 2^{exp})
 uint Entry(const uint ind)
 {
     if (ind) { return Gray_code(((ind - 1) >> 1) << 1); }
@@ -117,7 +123,7 @@ void Transform_inverse(
 // with given coordinates for simulation box with 2^{exp} patches per side
 // (2^{2 * exp} patches in total)
 uint Hilbert_index_orientation(
-    const uint exp, const Tuple<2D> & coords, uint & entry, uint & dir
+    const uint exp, const uint * coords, uint & entry, uint & dir
 )
 {
     uint index = 0;
@@ -145,9 +151,9 @@ uint Hilbert_index_orientation(
 //============================================================================//
 // Calculates the Hilbert index of patch of given coordinates
 // for a simulation box with 2^{exp} patches
-// per side (2^(2 * exp) patches in total)
+// per side (2^{2 * exp} patches in total)
 template<>
-uint Hilbert_index<2D>(const uint exp, const Tuple<2D> & coords)
+uint Hilbert_index<TwoDim>(const uint exp, const uint * coords)
 {
     uint entry = 0;
     uint dir = 0;
@@ -162,8 +168,8 @@ uint Hilbert_index<2D>(const uint exp, const Tuple<2D> & coords)
 // for a simulation box with 2^{exp} patches
 // per side (2^{3 * exp} patches in total)
 template<>
-uint Hilbert_index<3D>(
-    const uint exp, const Tuple<3D> & coords, const uint entry, const uint dir
+uint Hilbert_index<ThreeDim>(
+    const uint exp, const uint * coords, const uint entry, const uint dir
 )
 {
     uint index = 0;
@@ -194,9 +200,9 @@ uint Hilbert_index<3D>(
 // in a simulation box with 2^{exp} patches per side
 // (2^{2 * exp} patches in total)
 template<>
-void Hilbert_index_inverse<2D>(
+void Hilbert_index_inverse<TwoDim>(
     const uint exp,
-    Tuple<2D> & coords,
+    uint * coords,
     const uint index,
     const uint entry,
     const uint dir
@@ -205,7 +211,7 @@ void Hilbert_index_inverse<2D>(
     uint loc;
     uint loc_ind;
 
-    coords.Set(0);
+    coords[1] = coords[0] = 0;
 
     for (uint i = exp - 1; i >= 0; --i)
     {
@@ -226,11 +232,11 @@ void Hilbert_index_inverse<2D>(
 //============================================================================//
 // Calculates the coordinates of a patch with given Hilbert index
 // in a simulation box with 2^{exp} patches per side
-// (2^(3 * exp) patches in total)
+// (2^{3 * exp} patches in total)
 template<>
-void Hilbert_index_inverse<3D>(
+void Hilbert_index_inverse<ThreeDim>(
     const uint exp,
-    Tuple<3D> & coords,
+    uint * coords,
     const uint index,
     const uint entry,
     const uint dir
@@ -239,7 +245,7 @@ void Hilbert_index_inverse<3D>(
     uint loc;
     uint loc_ind;
 
-    coords.Set(0);
+    coords[2] = coords[1] = coords[0] = 0;
 
     for (uint i = exp - 1; i >= 0; --i)
     {
@@ -266,7 +272,7 @@ void Hilbert_index_inverse<3D>(
 // for a simulation box with 2^{exps[d]} patches per side
 // (2^{exps[0] + exps[1]} patches in total)
 uint General_Hilbert_index_orientation(
-    const Tuple<2D> & exps, const Tuple<2D> & coords, uint & entry, uint & dir
+    const uint * exps, const uint * coords, uint & entry, uint & dir
 )
 {
     if (coords[0] >= (1U << exps[0]) || coords[1] >= (1U << exps[1]))
@@ -298,12 +304,22 @@ uint General_Hilbert_index_orientation(
 }
 
 //============================================================================//
+//  General Hilbert index in 1D 
+//============================================================================//
+// Calculates the compact Hilbert index of a patch with given coordinates
+// for a simulation box with 2^{exps[0]} patches per side (in total)
+uint General_Hilbert_index<OneDim>(const uint * exps, uint * coords)
+{
+    return (coords[0] >= (1U << exps[0])? ~0U: coords[0];
+}
+
+//============================================================================//
 //  General Hilbert index in 2D 
 //============================================================================//
 // Calculates the compact Hilbert index of a patch with given coordinates
 // for a simulation box with 2^{exps[d]} patches per side
 // (2^{exps[0] + exps[1]} patches in total)
-uint General_Hilbert_index<2D>(const Tuple<2D> & exps, Tuple<2D> & coords)
+uint General_Hilbert_index<TwoDim>(const uint * exps, uint * coords)
 {
     uint entry = 0;
     uint dir = 0;
@@ -318,36 +334,34 @@ uint General_Hilbert_index<2D>(const Tuple<2D> & exps, Tuple<2D> & coords)
 // for a simulation box with 2^{exps[d]} patches per side
 // (2^{exps[0] + exps[1] + exps[2]} patches in total)
 template<>
-uint General_Hilbert_index<3D>(const Tuple<3D> & exps, const uint * coordinates)
+uint General_Hilbert_index<ThreeDim>(const uint * exps, const uint * coords)
 {
     if (
-        coordinates[0] >= (1U << exps[0]) || coordinates[1] >= (1U << exps[1])
-        || coordinates[2] >= (1U << exps[2])
+        coords[0] >= (1U << exps[0]) || coords[1] >= (1U << exps[1])
+        || coords[2] >= (1U << exps[2])
     )
     {
         return ~0U;
     }
 
-    Tuple<3D> order;
+    uint order[ThreeDim];
                       
     // compare exponents
     Identify_descend_order(exps, order);
 
-    Tuple<3D> coords;
+    uint ord_coords[ThreeDim]
+        = { coords[order[0]], coords[order[1]], coords[order[2]] };
 
-    coords[0] = coordinates[order[0]];
-    coords[1] = coordinates[order[1]];
-    coords[2] = coordinates[order[2]];
-
-    const uint & min_exp = exps[order[2]];
+    const uint min_exp = exps[order[2]];
 
     // approach on flattened 2D grid along max and med exps
     // 3D grid is projected along min_exp axis
     // erase last min_exp bits, not relevant for this phase
-    const uint flat_exps[2]
+    const uint flat_exps[TwoDim]
         = { exps[order[0]] - min_exp, exps[order[1]] - min_exp };
 
-    const uint flat_coords[2] = { coords[0] >> min_exp, coords[1] >> min_exp };
+    const uint flat_coords[TwoDim]
+        = { ord_coords[0] >> min_exp, ord_coords[1] >> min_exp };
 
     uint entry = 0;
     uint dir = 0;
@@ -357,16 +371,27 @@ uint General_Hilbert_index<3D>(const Tuple<3D> & exps, const uint * coordinates)
             * (1U << (3 * min_exp));
 
     // in local cube of side 2^{min_exp}
-    // local entry point "entry" and initial direction "dir" of local hilbert
+    // local entry point "entry" and initial direction "dir" of local Hilbert
     // curve has been determined by the previous call of General_Hilbert_index
     // relative position in local cube is given by last min_exp bits of position
     // only keep the last min_exp bits
-    const uint mask = (1U << min_exp) - 1;
-
-    for (uint d = 0; d < 3; ++d) { coords[d] &= mask; }
+    for (uint d = 0; d < 3; ++d) { ord_coords[d] &= (1U << min_exp) - 1; }
 
     // return overall index
-    return index + Hilbert_index<3D>(min_exp, coords, entry, dir);
+    return index + Hilbert_index<ThreeDim>(min_exp, ord_coords, entry, dir);
+}
+
+//============================================================================//
+//  General Hilbert index inverse in 1D
+//============================================================================//
+// Calculates coordinates of a patch for a given Hilbert index
+// in a simulation box with 2^{exps[0]} patches per side (in total)
+template<>
+void General_Hilbert_index_inverse<OneDim>(
+    const uint *, uint * coords, const uint index
+)
+{
+    coords[0] = index;
 }
 
 //============================================================================//
@@ -376,8 +401,8 @@ uint General_Hilbert_index<3D>(const Tuple<3D> & exps, const uint * coordinates)
 // in a simulation box with 2^{exps[d]} patches
 // per side (2^{exps[0] + exps[1]} patches in total)
 template<>
-void General_Hilbert_index_inverse<2D>(
-    const Tuple<2D> & exps, Tuple<2D> & coords, const uint index
+void General_Hilbert_index_inverse<TwoDim>(
+    const uint * exps, uint * coords, const uint index
 )
 {
     // compare exponents and target coordinate which must be shifted
@@ -397,7 +422,7 @@ void General_Hilbert_index_inverse<2D>(
     }
 
     // run the cubic inversion algorithm in the sub-hypercube
-    Hilbert_index_inverse<2D>(min_exp, coords, ind, 0, dir);
+    Hilbert_index_inverse<TwoDim>(min_exp, coords, ind, 0, dir);
 
     // shift the appropriate coordinate by the necessary value
     coords[dir] += shift;
@@ -410,28 +435,28 @@ void General_Hilbert_index_inverse<2D>(
 // in a simulation box with 2^{exps[d]} patches
 // per side (2^{exps[0] + exps[1] + exps[2]} patches in total)
 template<>
-void General_Hilbert_index_inverse<3D>(
-    const Tuple<3D> & exps, Tuple<3D> & coordinates, const uint index
+void General_Hilbert_index_inverse<ThreeDim>(
+    const uint * exps, uint * coords, const uint index
 )
 {
-    Tuple<3D> order;
+    uint order[ThreeDim];
                       
     // compare exponents
     Identify_descend_order(exps, order);
 
-    const uint & min_exp = exps[order[2]];
+    const uint min_exp = exps[order[2]];
 
-    const uint flat_exps[2]
+    const uint flat_exps[TwoDim]
         = { exps[order[0]] - min_exp, exps[order[1]] - min_exp };
 
-    Tuple<3D> coords;
+    uint loc_coords[ThreeDim];
 
     // localize in which sub-hypercube the point is
-    // do not account for the first 3 * min_exp bits of index
+    // do not account for the first (3 * min_exp) bits of index
     uint loc_ind = index >> (3 * min_exp);
 
     // run 2D inversion algorithm on reduced domain
-    General_Hilbert_index_inverse<2D>(flat_exps, coords, loc_ind);
+    General_Hilbert_index_inverse<TwoDim>(flat_exps, loc_coords, loc_ind);
 
     // now coordinates store the position of the cube in the 2D domain
     // we need to run the 3D inversion algorithm on this cube
@@ -440,23 +465,24 @@ void General_Hilbert_index_inverse<3D>(
     uint dir = 0;
 
     // run the 2D indexgenerator in order to evaluate entry and dir
-    loc_ind = General_Hilbert_index_orientation(flat_exps, coords, entry, dir);
+    loc_ind
+        = General_Hilbert_index_orientation(flat_exps, loc_coords, entry, dir);
 
     // store transformed coordinates in the resulting global frame
-    coordinates[order[0]] = coords[0] * (1 << min_exp);
-    coordinates[order[1]] = coords[1] * (1 << min_exp);
-    coordinates[order[2]] = 0;
+    coords[order[0]] = loc_coords[0] * (1U << min_exp);
+    coords[order[1]] = loc_coords[1] * (1U << min_exp);
+    coords[order[2]] = 0;
 
     // use only first bits of index for the local hypercube
     loc_ind = index & ((1U << (3 * min_exp)) - 1);
 
     // run the cubic inversion algorithm in the local sub hypercube
-    Hilbert_index_inverse<3D>(min_exp, coords, loc_ind, entry, dir);
+    Hilbert_index_inverse<ThreeDim>(min_exp, loc_coords, loc_ind, entry, dir);
 
     // store the resulting coordinates
-    coordinates[order[0]] += coords[0];
-    coordinates[order[1]] += coords[1];
-    coordinates[order[2]] += coords[2];
+    coords[order[0]] += loc_coords[0];
+    coords[order[1]] += loc_coords[1];
+    coords[order[2]] += loc_coords[2];
 }
 
 } // namespace maxwell

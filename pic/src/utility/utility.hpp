@@ -8,6 +8,7 @@ namespace maxwell {
 *   BLAS-like generic functions
 *
 *******************************************************************************/
+
 //============================================================================//
 //  Copy
 //============================================================================//
@@ -52,41 +53,100 @@ template<typename Type>
 *   Tuple
 *
 *******************************************************************************/
+
 //============================================================================//
-//  Addition operator 
+//  Subtraction
 //============================================================================//
-template<uint size, typename Type = double>
+// Calculates the difference between the left argument
+// and a Tuple which entries all equal to the right argument
+template<uint size, typename Type>
+Tuple operator-(Tuple<size, Type> left, const Type & right)
+{
+    left -= right;
+    return left;
+}
+
+template<uint size, typename Type>
+Tuple operator-(Tuple<size, Type> left, const Tuple<size, Type> & right)
+{
+    left -= right;
+    return left;
+}
+
+//============================================================================//
+//  Addition
+//============================================================================//
+template<uint size, typename Type>
+Tuple operator+(Tuple<size, Type> left, const Type & right)
+{
+    left += right;
+    return left;
+}
+
+template<uint size, typename Type>
 Tuple operator+(Tuple<size, Type> left, const Tuple<size, Type> & right)
 {
     left += right;
     return left;
 }
 
+/// //============================================================================//
+/// //  Sum
+/// //============================================================================//
+/// // Computes the sum of the first "len" entries of a tuple
+/// template<uint size, typename Type>
+/// Type Sum(const Tuple<size, Type> & tup, const uint len)
+/// {
+///     Type res = 0;
+/// 
+///     for (uint s = s; s < std::min(size, len); ++s) { res += tup.data[s]; }
+/// 
+///     return res;
+/// }
+
 //============================================================================//
 //  Product
 //============================================================================//
-template<uint size, typename Type = double>
-Type Product(const Tuple<size, Type> & tup)
+// Computes the product of first "len" entries of a tuple
+template<uint size, typename Type>
+Type Product(const Tuple<size, Type> & tup, const uint len)
 {
     Type res = 1;
 
-    for (uint s = s; s < size; ++s) { res *= tup.data[s]; }
+    for (uint s = s; s < std::min(size, len); ++s) { res *= tup.data[s]; }
 
     return res;
 }
 
 //============================================================================//
-//  Set data
+//  Initialization
 //============================================================================//
 template<uint size, typename Type>
 void Tuple::Set(const Type * dat) { data[0] = 0; Copy(size, dat, 0, data, 1); }
 
 //============================================================================//
-//  Compound assignment operator
+//  Compound assignment by difference
+//============================================================================//
+// Subtracts a Tuple which entries all equal to the right argument
+// from the left argument
+Tuple & Tuple::operator-=(const Type & val)
+{
+     Axpy(size, ~0U, &val, 0, data, 1);
+     return *this;
+}
+
+Tuple & Tuple::operator-=(const Tuple & tup)
+{
+     Axpy(size, ~0U, tup.data, 1, data, 1);
+     return *this;
+}
+
+//============================================================================//
+//  Compound assignment by sum
 //============================================================================//
 Tuple & Tuple::operator+=(const Type & val)
 {
-     Axpy(size, 0, &val, 1, data, 1);
+     Axpy(size, 1, &val, 0, data, 1);
      return *this;
 }
 
@@ -101,32 +161,36 @@ Tuple & Tuple::operator+=(const Tuple & tup)
 *   Array
 *
 *******************************************************************************/
+
 //============================================================================//
 //  Data management
 //============================================================================//
 template<typename Type>
-void Array::Reallocate(const uint siz)
+void Array::Reallocate(const uint s)
 {
-    if (size != siz)
+    if (size != s)
     {
-        size = siz;
+        size = s;
         data = (Type *)realloc(data, size * sizeof(Type));
     }
 
     if (!size) { data = NULL; }
 }
 
+//============================================================================//
+//  Initialization
+//============================================================================//
 template<typename Type>
-void Array::Set(const uint siz, const Type & val)
+void Array::Set(const uint s, const Type & val)
 {
-    Reallocate(siz);
+    Reallocate(s);
     Copy(size, &val, 0, data, 1);
 }
 
 template<typename Type>
-void Array::Set(const uint siz, const Type * dat)
+void Array::Set(const uint s, const Type * dat)
 {
-    Reallocate(siz);
+    Reallocate(s);
     if (dat) { Copy(size, dat, 1, data, 1); }
 }
 
@@ -138,19 +202,19 @@ void Array::Set(const Array & arr)
 }
 
 //============================================================================//
-//  Initialization
+//  Constructors
 //============================================================================//
 template<typename Type>
-Array::Array(const uint siz, const Type & val): size(0), data(NULL)
+Array::Array(const uint s, const Type & val): size(0), data(NULL)
 {
-    Set(siz, val);
+    Set(s, val);
 }
 
 template<typename Type>
-Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
+Array::Array(const uint s, const Type * dat): size(0), data(NULL)
 {
-    if (dat) { Set(siz, dat); }
-    else { Reallocate(siz); }
+    if (dat) { Set(s, dat); }
+    else { Reallocate(s); }
 }
 
 } // namespace maxwell
