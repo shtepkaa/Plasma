@@ -28,25 +28,25 @@ struct PatchMarking
 *   Patch
 *
 *******************************************************************************/
-// Implements patch -- hyperrectangular part of a grid in simulation box
-// dim -- dimensionaliy of the patch
-// Type -- supported arithmetic type
+// Implements patch (aka hyperrectangular part) of a grid in the simulation box
+// template parameter: dim -- dimensionaliy of the patch
+// template parameter: Type -- supported arithmetic type
 template<Dim dim, typename Type = double>
 class Patch
 {
     private:
 
-        // Cartesian patch size exponents
-        Tuple<dim> grid_exps;
-
-        // Cartesian patch coordinates
-        Tuple<dim> grid_coords;
-
-        // nominal sizes: excluding ghosts
+        // Cartesian grid sizes 
         Tuple<dim> grid_sizes;
+
+        // Cartesian grid patch coordinates
+        Tuple<dim> coords;
 
         // ghost width
         uint ghost_width;
+
+        // nominal sizes: excluding ghosts
+        Tuple<dim> nominal_sizes;
 
         // actual sizes: including ghosts
         Tuple<dim> actual_sizes;

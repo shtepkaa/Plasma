@@ -1,16 +1,19 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-/// #include ""
+/// FIXME /// #include "patch.h"
+/// FIXME /// #include "utility.h"
 
 /// #include <>
 
 namespace maxwell {
 
-//============================================================================//
-//  BufferMarking
-//============================================================================//
-// implements buffer marking 
+/*******************************************************************************
+*
+*   BufferMarking
+*
+*******************************************************************************/
+// Implements buffer marking 
 template<Dim dim>
 struct BufferMarking
 {
@@ -22,12 +25,14 @@ struct BufferMarking
     uint offset;
 };
 
-//============================================================================//
-//  Domain
-//============================================================================//
+/*******************************************************************************
+*
+*   Domain
+*
+*******************************************************************************/
 // Implements data structure per process corresponding to a single MPI rank
-/// >>> /// implementation should probably be changed to a singleton class
-template<Dim dim, /* ??? Order ord,*/ ArithmeticType Type>
+/// !!! /// implementation should probably be changed to a singleton class
+template<Dim dim, Order ord, typename Type = double>
 class Domain
 {
     private:
@@ -35,47 +40,39 @@ class Domain
         // MPI rank
         uint rank;
 
-        // global range of ranks
+        // Global range of ranks
         uint range;
 
-        // grid Hilbert index decomposition
+        // Grid Hilbert index decomposition
         Array<uint> domain_bounds;
 
-        // neighbour ranks
+        // Neighbour ranks
         Array<uint> neighbour_ranks;
 
-            // patch Cartesian grid sizes
-            uint patch_sizes[dim];
+        // Patch Cartesian grid sizes
+        uint initial_patch_sizes[dim];
 
-        // patches arranged in specified Order
+        // Patches arranged in specified Order
         Array<Patch *> patches;
 
-        // local buffer marking
+        // Local buffer marking
         Array<GhostMarking> local_buffer_markings;
 
-        // neighbours incoming buffers marking
+        // Neighbours incoming buffers marking
         Array< Array<GhostMarking> > recv_buffer_markings;
 
-        // should probably (re)allocate independantly
-        // for different buffers
-            /// // neighbours incoming buffers
-            /// Array<uint> recv_buffers;
         // __device__
         // neighbours incoming buffers
         Array<Type *> recv_buffers;
 
-        // neighbours outcoming buffers marking
+        // Neighbours outcoming buffers marking
         Array< Array<GhostMarking> > send_buffer_markings;
 
-        // should probably (re)allocate independantly
-        // for different buffers
-            /// // neighbours outcoming buffers
-            /// Array<uint> send_buffers;
         // __device__
-        // neighbours outcoming buffers
+        // Neighbours outcoming buffers
         Array<Type *> send_buffers;
 
-        // identify neighbour ranks
+        // Identify neighbour ranks
         void Identify_neighbour_ranks();
 
         /// FIXME /// Either remove or switch to c++11: = delete
@@ -84,16 +81,16 @@ class Domain
 
     public:
 
-        // initialization
+        // Construction
         Domain(const uint, const uint, const uint *);
 
-        // deallocation
+        // Deallocation
         ~Domain();
 
-        // get rank
+        // Get rank
         inline uint Get_rank() const { return rank; }
 
-        // get Hilbert index range
+        // Get Hilbert index range
         uint Get_patch_min_index() const { return domain_bounds[rank]; }
         uint Get_patch_max_index() const { return domain_bounds[rank + 1]; }
 

@@ -5,6 +5,32 @@
 namespace maxwell {
 
 //============================================================================//
+//  Binary_logarithm
+//============================================================================//
+// Calculates exponent for a given integer power of two
+uint Binary_logarithm(const uint num)
+{
+    uint res = 0;
+    
+    for (uint n = num; !(n & 1); n >>= 1) { ++res; }
+
+    return res;
+}
+
+/// useful /// uint32_t Ceil_binary_power(uint32_t num)
+/// useful /// {
+/// useful ///     --num;
+/// useful /// 
+/// useful ///     num |= num >> 1;
+/// useful ///     num |= num >> 2;
+/// useful ///     num |= num >> 4;
+/// useful ///     num |= num >> 8;
+/// useful ///     num |= num >> 16;
+/// useful /// 
+/// useful ///     return ++num;
+/// useful /// }
+
+//============================================================================//
 //  Power
 //============================================================================//
 uint Power(const uint base, const uint exponent)
@@ -133,62 +159,62 @@ void mergesort(Iterator from, Iterator to)
 template<typename T>
 void MergeSort(T a[], size_t l)
 {
-	size_t BlockSizeIterator;
-	size_t BlockIterator;
-	size_t LeftBlockIterator;
-	size_t RightBlockIterator;
-	size_t MergeIterator;
+    size_t BlockSizeIterator;
+    size_t BlockIterator;
+    size_t LeftBlockIterator;
+    size_t RightBlockIterator;
+    size_t MergeIterator;
 
-	size_t LeftBorder;
-	size_t MidBorder;
-	size_t RightBorder;
-	for (BlockSizeIterator = 1; BlockSizeIterator < l; BlockSizeIterator *= 2)
-	{
-		for (BlockIterator = 0; BlockIterator < l - BlockSizeIterator; BlockIterator += 2 * BlockSizeIterator)
-		{
-			//Производим слияние с сортировкой пары блоков начинающуюся с элемента BlockIterator
-			//левый размером BlockSizeIterator, правый размером BlockSizeIterator или меньше
-			LeftBlockIterator = 0;
-			RightBlockIterator = 0;
-			LeftBorder = BlockIterator;
-			MidBorder = BlockIterator + BlockSizeIterator;
-			RightBorder = BlockIterator + 2 * BlockSizeIterator;
-			RightBorder = (RightBorder < l) ? RightBorder : l;
-			int* SortedBlock = new int[RightBorder - LeftBorder];
+    size_t LeftBorder;
+    size_t MidBorder;
+    size_t RightBorder;
+    for (BlockSizeIterator = 1; BlockSizeIterator < l; BlockSizeIterator *= 2)
+    {
+        for (BlockIterator = 0; BlockIterator < l - BlockSizeIterator; BlockIterator += 2 * BlockSizeIterator)
+        {
+            //Производим слияние с сортировкой пары блоков начинающуюся с элемента BlockIterator
+            //левый размером BlockSizeIterator, правый размером BlockSizeIterator или меньше
+            LeftBlockIterator = 0;
+            RightBlockIterator = 0;
+            LeftBorder = BlockIterator;
+            MidBorder = BlockIterator + BlockSizeIterator;
+            RightBorder = BlockIterator + 2 * BlockSizeIterator;
+            RightBorder = (RightBorder < l) ? RightBorder : l;
+            int* SortedBlock = new int[RightBorder - LeftBorder];
 
-			//Пока в обоих массивах есть элементы выбираем меньший из них и заносим в отсортированный блок
-			while (LeftBorder + LeftBlockIterator < MidBorder && MidBorder + RightBlockIterator < RightBorder)
-			{
-				if (a[LeftBorder + LeftBlockIterator] < a[MidBorder + RightBlockIterator])
-				{
-					SortedBlock[LeftBlockIterator + RightBlockIterator] = a[LeftBorder + LeftBlockIterator];
-					LeftBlockIterator += 1;
-				}
-				else
-				{
-					SortedBlock[LeftBlockIterator + RightBlockIterator] = a[MidBorder + RightBlockIterator];
-					RightBlockIterator += 1;
-				}
-			}
-			//После этого заносим оставшиеся элементы из левого или правого блока
-			while (LeftBorder + LeftBlockIterator < MidBorder)
-			{
-				SortedBlock[LeftBlockIterator + RightBlockIterator] = a[LeftBorder + LeftBlockIterator];
-				LeftBlockIterator += 1;
-			}
-			while (MidBorder + RightBlockIterator < RightBorder)
-			{
-				SortedBlock[LeftBlockIterator + RightBlockIterator] = a[MidBorder + RightBlockIterator];
-				RightBlockIterator += 1;
-			}
+            //Пока в обоих массивах есть элементы выбираем меньший из них и заносим в отсортированный блок
+            while (LeftBorder + LeftBlockIterator < MidBorder && MidBorder + RightBlockIterator < RightBorder)
+            {
+                if (a[LeftBorder + LeftBlockIterator] < a[MidBorder + RightBlockIterator])
+                {
+                    SortedBlock[LeftBlockIterator + RightBlockIterator] = a[LeftBorder + LeftBlockIterator];
+                    LeftBlockIterator += 1;
+                }
+                else
+                {
+                    SortedBlock[LeftBlockIterator + RightBlockIterator] = a[MidBorder + RightBlockIterator];
+                    RightBlockIterator += 1;
+                }
+            }
+            //После этого заносим оставшиеся элементы из левого или правого блока
+            while (LeftBorder + LeftBlockIterator < MidBorder)
+            {
+                SortedBlock[LeftBlockIterator + RightBlockIterator] = a[LeftBorder + LeftBlockIterator];
+                LeftBlockIterator += 1;
+            }
+            while (MidBorder + RightBlockIterator < RightBorder)
+            {
+                SortedBlock[LeftBlockIterator + RightBlockIterator] = a[MidBorder + RightBlockIterator];
+                RightBlockIterator += 1;
+            }
 
-			for (MergeIterator = 0; MergeIterator < LeftBlockIterator + RightBlockIterator; MergeIterator++)
-			{
-				a[LeftBorder + MergeIterator] = SortedBlock[MergeIterator];
-			}
-			delete SortedBlock;
-		}
-	}
+            for (MergeIterator = 0; MergeIterator < LeftBlockIterator + RightBlockIterator; MergeIterator++)
+            {
+                a[LeftBorder + MergeIterator] = SortedBlock[MergeIterator];
+            }
+            delete SortedBlock;
+        }
+    }
 }
 
 } // namespace maxwell

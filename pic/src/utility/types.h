@@ -5,8 +5,11 @@ namespace maxwell {
 
 typedef unsigned int uint;
 
-// dimensionality
+// Dimensionality
 enum Dim: uint { OneDim = 1, TwoDim, ThreeDim };
+
+// Patch order
+enum Order: uint { Cartesian = 0, Hilbertian };
 
 } // namespace maxwell
 
