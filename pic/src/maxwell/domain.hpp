@@ -29,18 +29,17 @@ void Domain::Set_border_patch_indices()
 //  Initialization
 //============================================================================//
 template<Dim dim>
-Domain::Domain(const uint min_index, const uint max_index, const uint * sizes):
+Domain::Domain(const uint min_index, const uint max_index, const Tuple<dim> sizes):
     rank(0),
     range(0),
+    domain_bounds(),
     neighbour_ranks(),
-    patch_min_index(min_index),
-    patch_max_index(max_index),
-    patches(max_index - min_index, NULL),
-    patch_sizes(dim, sizes),
-    border_patch_indices(),
-    recv_buffer_markups(),
+    patch_sizes(sizes),
+    patches(Get_patch_max_index() - Get_patch_min_index()),
+    local_buffer_markings(),
+    recv_buffer_markings(),
     recv_buffers(),
-    send_buffer_markups(),
+    send_buffer_markings(),
     send_buffers()
 {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -54,9 +53,16 @@ Domain::Domain(const uint min_index, const uint max_index, const uint * sizes):
 //============================================================================//
 //  Deallocation
 //============================================================================//
-template<Dim dim>
+template<Dim dim, Order ord, typename Type>
 Domain::~Domain()
 {
+    for (uint p = 0; p < patches.Get_size(); ++p)
+    {
+        delete patches[p];
+
+        CUDA_CALL(cudaFree(recv_buffers[p]));
+        CUDA_CALL(cudaFree(send_buffers[p]));
+    }
 }
 
 } // namespace maxwell

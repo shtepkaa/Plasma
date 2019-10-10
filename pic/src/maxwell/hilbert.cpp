@@ -56,7 +56,7 @@ uint Gray_code_inverse(const uint code)
 {
     uint num = code;
 
-    for (uint c = 1; (1U << c) <= code; ++c) { num ^= code >> c; }
+    for (int c = 1; (1U << c) <= code; ++c) { num ^= code >> c; }
 
     return num;
 }
@@ -70,7 +70,7 @@ uint Trailing_set_bit(const uint num)
 {
     uint count = 0;
 
-    for (uint n = num; n & 1; n >>= 1) { ++count; }
+    for (int n = num; n & 1; n >>= 1) { ++count; }
 
     return count;
 }
@@ -131,7 +131,7 @@ uint Hilbert_index_orientation(
     uint loc;
     uint loc_ind;
 
-    for (uint i = exp - 1; i >= 0; --i)
+    for (int i = exp - 1; i >= 0; --i)
     {
         loc = (Get_bit(coords[1], i) << 1) + Get_bit(coords[0], i);
         Transform(entry, dir, loc, 2);
@@ -177,7 +177,7 @@ uint Hilbert_index<ThreeDim>(
     uint loc;
     uint loc_ind;
 
-    for (uint i = exp - 1; i >= 0; --i)
+    for (int i = exp - 1; i >= 0; --i)
     {
         loc = (Get_bit(coords[2], i) << 2) + (Get_bit(coords[1], i) << 1)
             + Get_bit(coords[0], i);
@@ -213,7 +213,7 @@ void Hilbert_index_inverse<TwoDim>(
 
     coords[1] = coords[0] = 0;
 
-    for (uint i = exp - 1; i >= 0; --i)
+    for (int i = exp - 1; i >= 0; --i)
     {
         loc_ind = (Get_bit(index, (i << 1) + 1) << 1) + Get_bit(index, i << 1);
         loc = Gray_code(loc_ind);
@@ -247,7 +247,7 @@ void Hilbert_index_inverse<ThreeDim>(
 
     coords[2] = coords[1] = coords[0] = 0;
 
-    for (uint i = exp - 1; i >= 0; --i)
+    for (int i = exp - 1; i >= 0; --i)
     {
         loc_ind
             = (Get_bit(index, 3 * i + 2) << 2)
@@ -277,7 +277,7 @@ uint General_Hilbert_index_orientation(
 {
     if (coords[0] >= (1U << exps[0]) || coords[1] >= (1U << exps[1]))
     {
-        return ~0U;
+        return -1;
     }
 
     dir = (exps[0] < exps[1]);
@@ -287,7 +287,7 @@ uint General_Hilbert_index_orientation(
 
     uint loc;
 
-    for (uint i = exps[dir] - 1; i >= min_exp; --i)
+    for (int i = exps[dir] - 1; i >= int(min_exp); --i)
     {
         loc = Get_bit(coords[dir], i);
         index += loc * (1 << (i + min_exp));
@@ -310,7 +310,7 @@ uint General_Hilbert_index_orientation(
 // for a simulation box with 2^{exps[0]} patches per side (in total)
 uint General_Hilbert_index<OneDim>(const uint * exps, uint * coords)
 {
-    return (coords[0] >= (1U << exps[0])? ~0U: coords[0];
+    return (coords[0] >= (1U << exps[0])? -1: coords[0];
 }
 
 //============================================================================//
@@ -341,7 +341,7 @@ uint General_Hilbert_index<ThreeDim>(const uint * exps, const uint * coords)
         || coords[2] >= (1U << exps[2])
     )
     {
-        return ~0U;
+        return -1;
     }
 
     uint order[ThreeDim];
@@ -375,7 +375,7 @@ uint General_Hilbert_index<ThreeDim>(const uint * exps, const uint * coords)
     // curve has been determined by the previous call of General_Hilbert_index
     // relative position in local cube is given by last min_exp bits of position
     // only keep the last min_exp bits
-    for (uint d = 0; d < 3; ++d) { ord_coords[d] &= (1U << min_exp) - 1; }
+    for (int d = 0; d < 3; ++d) { ord_coords[d] &= (1U << min_exp) - 1; }
 
     // return overall index
     return index + Hilbert_index<ThreeDim>(min_exp, ord_coords, entry, dir);
@@ -414,7 +414,7 @@ void General_Hilbert_index_inverse<TwoDim>(
     uint loc;
 
     // define in which sub-hypercube of side 2^{min_exp} the point is
-    for (uint i = exps[0] + exps[1] - 1; i >= 2 * min_exp; --i)
+    for (int i = exps[0] + exps[1] - 1; i >= int(2 * min_exp); --i)
     {
         loc = Get_bit(ind, i);
         shift += loc * (1 << (i - min_exp));

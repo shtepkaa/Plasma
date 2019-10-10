@@ -3,12 +3,11 @@
 
 namespace maxwell {
 
-/*******************************************************************************
-*
-*   BLAS-like generic functions
-*
-*******************************************************************************/
-
+////////////////////////////////////////////////////////////////////////////////
+//
+//  BLAS-like generic functions
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Copy
 //============================================================================//
@@ -22,7 +21,7 @@ template<typename Type>
 )
 {
 /* #pragma omp parallel for */
-    for (uint s = 0, d = 0; d < dim; s += inc_src, d += inc_dst)
+    for (int s = 0, d = 0; d < dim; s += inc_src, d += inc_dst)
     {
         dst[d] = src[s];
     }
@@ -42,18 +41,17 @@ template<typename Type>
 )
 {
 /* #pragma omp parallel for */
-    for (uint s = 0, d = 0; d < dim; s += inc_src, d += inc_dst)
+    for (int s = 0, d = 0; d < dim; s += inc_src, d += inc_dst)
     {
         dst[d] += mult * src[s];
     }
 }
 
-/*******************************************************************************
-*
-*   Tuple
-*
-*******************************************************************************/
-
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Tuple
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Subtraction
 //============================================================================//
@@ -90,19 +88,19 @@ Tuple operator+(Tuple<size, Type> left, const Tuple<size, Type> & right)
     return left;
 }
 
-/// //============================================================================//
-/// //  Sum
-/// //============================================================================//
-/// // Computes the sum of the first "len" entries of a tuple
-/// template<uint size, typename Type>
-/// Type Sum(const Tuple<size, Type> & tup, const uint len)
-/// {
-///     Type res = 0;
-/// 
-///     for (uint s = s; s < std::min(size, len); ++s) { res += tup.data[s]; }
-/// 
-///     return res;
-/// }
+/// useful /// //============================================================================//
+/// useful /// //  Sum
+/// useful /// //============================================================================//
+/// useful /// // Computes the sum of the first "len" entries of a tuple
+/// useful /// template<uint size, typename Type>
+/// useful /// Type Sum(const Tuple<size, Type> & tup, const uint len)
+/// useful /// {
+/// useful ///     Type res = 0;
+/// useful /// 
+/// useful ///     for (int s = 0; s < std::min(size, len); ++s) { res += tup.data[s]; }
+/// useful /// 
+/// useful ///     return res;
+/// useful /// }
 
 //============================================================================//
 //  Product
@@ -113,7 +111,7 @@ Type Product(const Tuple<size, Type> & tup, const uint len)
 {
     Type res = 1;
 
-    for (uint s = s; s < std::min(size, len); ++s) { res *= tup.data[s]; }
+    for (int s = 0; s < std::min(size, len); ++s) { res *= tup.data[s]; }
 
     return res;
 }
@@ -124,6 +122,14 @@ Type Product(const Tuple<size, Type> & tup, const uint len)
 template<uint size, typename Type>
 void Tuple::Set(const Type * dat) { data[0] = 0; Copy(size, dat, 0, data, 1); }
 
+// Constructs a new Tuple
+// by the entries of the original Tuple undergone the Mutator function
+template<uint size, typename Type = uint>
+void Tuple::Set(const Tuple & tup, Type (* const Mutator)(const Type &))
+{
+    for (int s = 0; s < size; ++s) { data[s] = Mutator(tup.data[s]); }
+}
+
 //============================================================================//
 //  Compound assignment by difference
 //============================================================================//
@@ -131,13 +137,13 @@ void Tuple::Set(const Type * dat) { data[0] = 0; Copy(size, dat, 0, data, 1); }
 // from the left argument
 Tuple & Tuple::operator-=(const Type & val)
 {
-     Axpy(size, ~0U, &val, 0, data, 1);
+     Axpy(size, -1, &val, 0, data, 1);
      return *this;
 }
 
 Tuple & Tuple::operator-=(const Tuple & tup)
 {
-     Axpy(size, ~0U, tup.data, 1, data, 1);
+     Axpy(size, -1, tup.data, 1, data, 1);
      return *this;
 }
 
@@ -156,12 +162,11 @@ Tuple & Tuple::operator+=(const Tuple & tup)
      return *this;
 }
 
-/*******************************************************************************
-*
-*   Array
-*
-*******************************************************************************/
-
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Array
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Data management
 //============================================================================//

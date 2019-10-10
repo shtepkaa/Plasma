@@ -5,11 +5,11 @@
 
 namespace maxwell {
 
-/*******************************************************************************
-*
-*   BLAS-like generic functions
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  BLAS-like generic functions
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Copy
 //============================================================================//
@@ -60,17 +60,20 @@ uint Sub_hypercube_count(const uint, const uint);
 // Counts total amount of sub-hypercubes in cube
 uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
 
-/*******************************************************************************
-*
-*   Tuple
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Tuple
+//
+////////////////////////////////////////////////////////////////////////////////
 // Contains tuple of given type 
 // works correctly for Copy-constructible types
 // allowing conversion from 0 and 1
 template<uint size, typename Type = uint>
 struct Tuple
 {
+    //========================================================================//
+    //  Friends
+    //========================================================================//
     // Subtraction
     friend Tuple operator-(Tuple, const Type &);
     friend Tuple operator-(Tuple, const Tuple &);
@@ -83,18 +86,26 @@ struct Tuple
     /// friend Type Sum(const Tuple &, const uint = size);
     friend Type Product(const Tuple &, const uint = size);
 
+    //========================================================================//
+    //  Data
+    //========================================================================//
     // Data array
     Type data[size];
 
+    //========================================================================//
+    //  Functionality
+    //========================================================================//
     // Initialization
     void Set(const Type & val) { Copy(size, &val, 0, data, 1); }
     void Set(const Type * = NULL);
     void Set(const Tuple & tup) { Copy(size, tup.data, 1, data, 1); }
+    void Set(const Tuple &, Type (* const)(const Type &));
 
     // Constructors
     Tuple(const Type & val) { Set(val); }  
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
+    Tuple(const Tuple & t, Type (* const Mut)(const Type &)) { Set(t, Mut); }
 
     // Assignment
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
@@ -116,11 +127,11 @@ struct Tuple
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
 
-/*******************************************************************************
-*
-*   Array
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Array
+//
+////////////////////////////////////////////////////////////////////////////////
 // Contains host array of given type
 template<typename Type>
 class Array
@@ -133,6 +144,9 @@ class Array
 
     public:
 
+        //====================================================================//
+        //  Functionality
+        //====================================================================//
         // data management
         void Reallocate(const uint = 0);
 

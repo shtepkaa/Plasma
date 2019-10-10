@@ -4,15 +4,13 @@
 /// FIXME /// #include "patch.h"
 /// FIXME /// #include "utility.h"
 
-/// #include <>
-
 namespace maxwell {
 
-/*******************************************************************************
-*
-*   BufferMarking
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  BufferMarking
+//
+////////////////////////////////////////////////////////////////////////////////
 // Implements buffer marking 
 template<Dim dim>
 struct BufferMarking
@@ -25,18 +23,28 @@ struct BufferMarking
     uint offset;
 };
 
-/*******************************************************************************
-*
-*   Domain
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Domain
+//
+////////////////////////////////////////////////////////////////////////////////
 // Implements data structure per process corresponding to a single MPI rank
-/// !!! /// implementation should probably be changed to a singleton class
+// Template parameter: dim -- dimensionality of the grid
+// Template parameter: ord -- order of patch numeration
+// Template parameter: Type -- supported arithmetic type
+//
+/// !!! /// Implementation should probably be changed to a singleton class
+//
+/// !!! /// Type should probably be changed to some data structure, representing
+/// !!! /// fields and particles
 template<Dim dim, Order ord, typename Type = double>
 class Domain
 {
     private:
 
+        //====================================================================//
+        //  Geometry descriptors
+        //====================================================================//
         // MPI rank
         uint rank;
 
@@ -50,11 +58,17 @@ class Domain
         Array<uint> neighbour_ranks;
 
         // Patch Cartesian grid sizes
-        uint initial_patch_sizes[dim];
+        Tuple<dim> patch_sizes;
 
+        //====================================================================//
+        //  Data
+        //====================================================================//
         // Patches arranged in specified Order
-        Array<Patch *> patches;
+        Array< Patch<dim, ord, Type> * > patches;
 
+        //====================================================================//
+        //  Domain communication descriptors
+        //====================================================================//
         // Local buffer marking
         Array<GhostMarking> local_buffer_markings;
 
@@ -72,6 +86,9 @@ class Domain
         // Neighbours outcoming buffers
         Array<Type *> send_buffers;
 
+        //====================================================================//
+        //  Initialization methods
+        //====================================================================//
         // Identify neighbour ranks
         void Identify_neighbour_ranks();
 
@@ -82,11 +99,14 @@ class Domain
     public:
 
         // Construction
-        Domain(const uint, const uint, const uint *);
+        Domain(const uint, const uint, const Tuple<dim> &);
 
         // Deallocation
         ~Domain();
 
+        //====================================================================//
+        //  Get methods
+        //====================================================================//
         // Get rank
         inline uint Get_rank() const { return rank; }
 
@@ -94,8 +114,14 @@ class Domain
         uint Get_patch_min_index() const { return domain_bounds[rank]; }
         uint Get_patch_max_index() const { return domain_bounds[rank + 1]; }
 
-        // copy patch to CPU
-        void Copy_patch(const uint, const Type *) const;
+        //====================================================================//
+        //  Get methods
+        //====================================================================//
+        // Compute patch count
+        inline uint Get_patch_count() const { return patches.Get_size(); }
+
+            /// // copy patch to CPU
+            /// void Copy_patch(const uint, const Type *) const;
 };
 
 } // namespace maxwell

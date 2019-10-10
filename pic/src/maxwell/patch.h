@@ -6,14 +6,14 @@
 
 namespace maxwell {
 
-/*******************************************************************************
-*
-*   PatchMarking
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  GhostMarking
+//
+////////////////////////////////////////////////////////////////////////////////
 // Implements patch marking
 template<Dim dim>
-struct PatchMarking
+struct GhostMarking
 {
     uint index;
 
@@ -23,46 +23,56 @@ struct PatchMarking
     uint recv_offset;
 };
 
-/*******************************************************************************
-*
-*   Patch
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Patch
+//
+////////////////////////////////////////////////////////////////////////////////
 // Implements patch (aka hyperrectangular part) of a grid in the simulation box
-// template parameter: dim -- dimensionaliy of the patch
-// template parameter: Type -- supported arithmetic type
-template<Dim dim, typename Type = double>
+// Template parameter: dim -- dimensionality of the grid
+// Template parameter: ord -- order of patch numeration
+// Template parameter: Type -- supported arithmetic type
+template<Dim dim, Order ord, typename Type = double>
 class Patch
 {
     private:
 
-        // Cartesian grid sizes 
-        Tuple<dim> grid_sizes;
+        //====================================================================//
+        //  Geometry descriptors
+        //====================================================================//
+        // Layer sizes of the grid in patches
+        Tuple<dim> layer_sizes;
 
-        // Cartesian grid patch coordinates
-        Tuple<dim> coords;
+        // Layer coordinates of the patch in a layer 
+        Tuple<dim> layer_coordinates;
 
-        // ghost width
+        // Sizes
+        Tuple<dim> sizes;
+
+        // Ghost width
         uint ghost_width;
 
-        // nominal sizes: excluding ghosts
-        Tuple<dim> nominal_sizes;
+        // Extended sizes including surrounding ghosts
+        Tuple<dim> extended_sizes;
 
-        // actual sizes: including ghosts
-        Tuple<dim> actual_sizes;
-
-        // ghost markings in lexicographic order
+        // Ghost markings in lexicographic order
         Array<GhostMarking> ghost_markings;
 
-        /// consideration ///
-        // actual data size: including ghosts
+        //====================================================================//
+        //  Data
+        //====================================================================//
+        // Data size including surrounding ghosts,
+        // which is the product of extended sizes
         uint data_size;
 
         // __device__
-        // patch data including ghosts
+        // Patch data including surrounding ghosts
         Type * data;
 
-        // initializes ghost markings
+        //====================================================================//
+        //  Initialization methods
+        //====================================================================//
+        // Initializes ghost markings
         void Initialize_markings();
 
         /// FIXME /// Either remove or switch to c++11: = delete
@@ -71,7 +81,7 @@ class Patch
 
     public:
 
-        // initialization
+        // construction
         Patch(
             const Tuple<dim> &,
             const Tuple<dim> &,
@@ -80,7 +90,7 @@ class Patch
         );
 
         // deallocation
-        ~Patch() { cudaFree(data); }
+        ~Patch() { CUDA_CALL(cudaFree(data)); }
 
         /// useful ///
         /// // get own id
@@ -88,6 +98,9 @@ class Patch
 
         const Array<PatchMarking> & Get_markings() const { return markings; }
 };
+
+        inline Type & operator[](const uint ind) { return data[ind]; }
+        inline const Type & operator[](const uint in) const { return data[in]; }
 
 } // namespace maxwell
 
