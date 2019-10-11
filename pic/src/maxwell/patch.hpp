@@ -31,7 +31,7 @@ static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
 //  Initialize markings
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
-void Patch::Initialize_markings()
+void Patch::Initialize_markings(const uint index)
 {
     // Extended size products
     uint prods[dim] = { 1 };
@@ -74,7 +74,9 @@ void Patch::Initialize_markings()
 
         // Identify index
         ghost_markings[s].index
-            = Index<dim, ord>(layer_sizes, (layer_coordinates + indices - 1));
+            = (s == Get_index())?
+                index:
+                Index<dim, ord>(layer_sizes, (layer_coordinates + indices - 1));
 
         // Identify sizes
         for (int d = 0; d < dim; ++d)
@@ -103,7 +105,8 @@ Patch::Patch(
     const Tuple<dim> & layer_sizs,
     const Tuple<dim> & layer_coords,
     const Tuple<dim> & sizs,
-    const uint width
+    const uint width,
+    const uint index
 ):
     layer_sizes(layer_sizs),
     layer_coordinates(layer_coords),
@@ -114,7 +117,7 @@ Patch::Patch(
     data_size(Product<dim>(extended_sizes)),
     data(NULL)
 {
-    Initialize_markings();
+    Initialize_markings(index);
     CUDA_CALL(cudaMalloc(&data, data_size * sizeof(Type)));
 }
 

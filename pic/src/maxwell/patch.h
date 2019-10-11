@@ -73,7 +73,7 @@ class Patch
         //  Initialization methods
         //====================================================================//
         // Initializes ghost markings
-        void Initialize_markings();
+        void Initialize_markings(const uint);
 
         /// FIXME /// Either remove or switch to c++11: = delete
         // default initialization
@@ -81,26 +81,27 @@ class Patch
 
     public:
 
-        // construction
+        // Construction
         Patch(
             const Tuple<dim> &,
             const Tuple<dim> &,
             const Tuple<dim> &,
+            const uint,
             const uint
         );
 
-        // deallocation
+        // Deallocation
         ~Patch() { CUDA_CALL(cudaFree(data)); }
 
-        /// useful ///
-        /// // get own id
-        /// const PatchMarking & Get_id() const { return ids[ids.Get_size() >> 1]; }
+        // Get index of the patch
+        inline uint Get_index() const { return ghost_markings.Get_size() >> 1; }
 
-        const Array<PatchMarking> & Get_markings() const { return markings; }
-};
+        // Get ghost markings
+        const Array<PatchMarking> & Get_ghost_markings() const; { return ghost_markings; }
 
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint in) const { return data[in]; }
+};
 
 } // namespace maxwell
 
