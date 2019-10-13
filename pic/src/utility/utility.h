@@ -29,11 +29,11 @@ void Axpy(
     const uint, const Type &, const Type *, const uint, Type *, const uint
 );
 
-/*******************************************************************************
-*
-*   Sub-hypercube counting functions
-*
-*******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Sub-hypercube counting functions
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Binary_logarithm
 //============================================================================//
@@ -58,7 +58,19 @@ uint Sub_hypercube_count(const uint, const uint);
 //============================================================================//
 /// FIXME /// probably switch to c++11 constexpr function
 // Counts total amount of sub-hypercubes in cube
-uint Total_hypercube_count(const uint dim) { return Power(3U, dim); }
+uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Binary search
+//
+////////////////////////////////////////////////////////////////////////////////
+//============================================================================//
+//  Binary search
+//============================================================================//
+// Counts total amount of sub-hypercubes in cube
+template<typename Type>
+uint Binary_search(const Array<Type> & arr, const Type & val);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -105,7 +117,7 @@ struct Tuple
     Tuple(const Type & val) { Set(val); }  
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
-    Tuple(const Tuple & t, Type (* const Mut)(const Type &)) { Set(t, Mut); }
+    Tuple(const Tuple &, Type (* const)(const Type &));
 
     // Assignment
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
@@ -147,34 +159,34 @@ class Array
         //====================================================================//
         //  Functionality
         //====================================================================//
-        // data management
+        // Data management
         void Reallocate(const uint = 0);
 
-        // initialization
+        // Initialization
         void Set(const uint, const Type &);
         void Set(const uint, const Type * = NULL);
         void Set(const Array &);
 
-        // constructors
+        // Constructors
         Array(): size(0), data(NULL) {}
         Array(const uint, const Type &);
         Array(const uint, const Type * = NULL);
         Array(const Array & arr): size(0), data(NULL) { Set(arr); }
 
-        // assignment
+        // Assignment
         Array & operator=(const Array & arr) { Set(arr); return *this; }
 
-        // deallocation
+        // Deallocation
         ~Array() { Reallocate(); }
 
-        // size access
+        // Get size
         inline uint Get_size() const { return size; }
 
-        // element mutate / access
-        inline Type & operator[](const uint in) { return data[in]; }
-        inline const Type & operator[](const uint in) const { return data[in]; }
+        // Element mutate / access
+        inline Type & operator[](const uint ind) { return data[ind]; }
+        inline const Type & operator[](const uint i) const { return data[i]; }
 
-        // data access
+        // Data access
         inline const Type * Export_data() const { return data; }
 };
 

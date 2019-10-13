@@ -1,9 +1,9 @@
 #ifndef PATCH_HPP
 #define PATCH_HPP
 
-/// FIXME /// #include "types.h"
-/// FIXME /// #include "utility.h"
-/// FIXME /// #include "hilbert.h"
+#include "types.h"
+#include "utility.h"
+#include "hilbert.h"
 
 #include <omp.h>
 
@@ -21,7 +21,7 @@ static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
     else if (ord == Hilbertian)
     {
         // Initialize by exponents of the given sizes
-        Tuple<dim> exps(sizes, Logarithm);
+        Tuple<dim> exps(sizes, Binary_logarithm);
 
         return General_Hilbert_index<dim>(exps, coords);
     }
@@ -119,6 +119,15 @@ Patch::Patch(
 {
     Initialize_markings(index);
     CUDA_CALL(cudaMalloc(&data, data_size * sizeof(Type)));
+}
+
+//============================================================================//
+//  Get ghost markings
+//============================================================================//
+template<Dim dim, Order ord, typename Type>
+const Array<GhostMarking> & Patch::Get_ghost_markings() const
+{
+    return ghost_markings;
 }
 
 } // namespace maxwell

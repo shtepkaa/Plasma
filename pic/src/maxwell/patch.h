@@ -1,8 +1,8 @@
 #ifndef PATCH_H
 #define PATCH_H
 
-/// FIXME /// #include "types.h"
-/// FIXME /// #include "utility.h"
+#include "types.h"
+#include "utility.h"
 
 namespace maxwell {
 
@@ -97,10 +97,10 @@ class Patch
         inline uint Get_index() const { return ghost_markings.Get_size() >> 1; }
 
         // Get ghost markings
-        const Array<PatchMarking> & Get_ghost_markings() const; { return ghost_markings; }
+        const Array<GhostMarking> & Get_ghost_markings() const;
 
         inline Type & operator[](const uint ind) { return data[ind]; }
-        inline const Type & operator[](const uint in) const { return data[in]; }
+        inline const Type & operator[](const uint i) const { return data[i]; }
 };
 
 } // namespace maxwell

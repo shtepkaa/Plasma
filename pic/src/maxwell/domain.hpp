@@ -8,28 +8,30 @@
 namespace maxwell {
 
 //============================================================================//
-//  Set_neighbour_ranks
+//  Set neighbour ranks
 //============================================================================//
-// identify neighbour ranks
+// Identifies neighbour ranks
 template<Dim dim>
 void Domain::Set_neighbour_ranks()
 {
 }
 
 //============================================================================//
-//  Set_border_patch_indices
+//  Set border patch indices
 //============================================================================//
-// identifies border patch indices
+// Identifies border patch indices
 template<Dim dim>
 void Domain::Set_border_patch_indices()
 {
 }
 
 //============================================================================//
-//  Initialization
+//  Constructor
 //============================================================================//
 template<Dim dim>
-Domain::Domain(const uint min_index, const uint max_index, const Tuple<dim> sizes):
+Domain::Domain(
+    const Tuple<dim> & sizes
+):
     rank(0),
     range(0),
     domain_bounds(),
@@ -47,6 +49,17 @@ Domain::Domain(const uint min_index, const uint max_index, const Tuple<dim> size
 
     for (int p = 0; p < patches.Get_size(); ++p)
     {
+        const Array<GhostMarkings> & markings = patches[p].Get_ghost_markings();
+
+        for (int m = 0; m < markings.Get_size(); ++m)
+        {
+            if (markings.index != Get_patch_min_index + p)
+            {
+            }
+            else
+            {
+            }
+        }
     }
 }
 

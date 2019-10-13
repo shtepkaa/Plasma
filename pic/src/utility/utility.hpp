@@ -53,6 +53,14 @@ template<typename Type>
 //
 ////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
+//  Constructor
+//============================================================================//
+Tuple::Tuple(const Tuple & tup, Type (* const Mut)(const Type &))
+{
+    Set(tup, Mut);
+}
+
+//============================================================================//
 //  Subtraction
 //============================================================================//
 // Calculates the difference between the left argument
@@ -123,11 +131,11 @@ template<uint size, typename Type>
 void Tuple::Set(const Type * dat) { data[0] = 0; Copy(size, dat, 0, data, 1); }
 
 // Constructs a new Tuple
-// by the entries of the original Tuple undergone the Mutator function
+// by the entries of the original Tuple undergone the mutator function
 template<uint size, typename Type = uint>
-void Tuple::Set(const Tuple & tup, Type (* const Mutator)(const Type &))
+void Tuple::Set(const Tuple & tup, Type (* const Mut)(const Type &))
 {
-    for (int s = 0; s < size; ++s) { data[s] = Mutator(tup.data[s]); }
+    for (int s = 0; s < size; ++s) { data[s] = Mut(tup.data[s]); }
 }
 
 //============================================================================//
@@ -171,31 +179,29 @@ Tuple & Tuple::operator+=(const Tuple & tup)
 //  Data management
 //============================================================================//
 template<typename Type>
-void Array::Reallocate(const uint s)
+void Array::Reallocate(const uint size)
 {
-    if (size != s)
+    if (size != new_size)
     {
-        size = s;
+        size = siz;
         data = (Type *)realloc(data, size * sizeof(Type));
     }
-
-    if (!size) { data = NULL; }
 }
 
 //============================================================================//
 //  Initialization
 //============================================================================//
 template<typename Type>
-void Array::Set(const uint s, const Type & val)
+void Array::Set(const uint siz, const Type & val)
 {
-    Reallocate(s);
+    Reallocate(siz);
     Copy(size, &val, 0, data, 1);
 }
 
 template<typename Type>
-void Array::Set(const uint s, const Type * dat)
+void Array::Set(const uint siz, const Type * dat)
 {
-    Reallocate(s);
+    Reallocate(siz);
     if (dat) { Copy(size, dat, 1, data, 1); }
 }
 
@@ -210,16 +216,16 @@ void Array::Set(const Array & arr)
 //  Constructors
 //============================================================================//
 template<typename Type>
-Array::Array(const uint s, const Type & val): size(0), data(NULL)
+Array::Array(const uint siz, const Type & val): size(0), data(NULL)
 {
-    Set(s, val);
+    Set(siz, val);
 }
 
 template<typename Type>
-Array::Array(const uint s, const Type * dat): size(0), data(NULL)
+Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
 {
-    if (dat) { Set(s, dat); }
-    else { Reallocate(s); }
+    if (dat) { Set(siz, dat); }
+    else { Reallocate(siz); }
 }
 
 } // namespace maxwell
