@@ -47,6 +47,9 @@ Domain::Domain(
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &range);
 
+    domain_bounds.Reallocate(range + 1);
+    neighbour_ranks.Reallocate(range);
+
     for (int p = 0; p < patches.Get_size(); ++p)
     {
         const Array<GhostMarkings> & markings = patches[p].Get_ghost_markings();
