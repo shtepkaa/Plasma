@@ -75,8 +75,8 @@ class Patch
         // Initializes ghost markings
         void Initialize_markings(const uint);
 
+        // Default
         /// FIXME /// Either remove or switch to c++11: = delete
-        // default initialization
         Patch() {}
 
     public:

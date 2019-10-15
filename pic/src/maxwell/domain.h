@@ -1,8 +1,9 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 
-/// FIXME /// #include "patch.h"
-/// FIXME /// #include "utility.h"
+#include "patch.h"
+#include "utility.h"
+#include "types.h"
 
 namespace maxwell {
 
@@ -12,14 +13,15 @@ namespace maxwell {
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements buffer marking 
-template<Dim dim>
+/// ??? /// template<Dim dim>
 struct BufferMarking
 {
     uint send_index;
     uint recv_index;
 
-    Tuple<dim> sizes;
+    /// Tuple<dim> sizes;
 
+    uint size;
     uint offset;
 };
 
@@ -29,9 +31,9 @@ struct BufferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements data structure per process corresponding to a single MPI rank
-// Template parameter: dim -- dimensionality of the grid
-// Template parameter: ord -- order of patch numeration
-// Template parameter: Type -- supported arithmetic type
+// Template parameter: dim -- the dimensionality of the grid
+// Template parameter: ord -- the order of patch numeration
+// Template parameter: Type -- the supported arithmetic type
 //
 /// !!! /// Implementation should probably be changed to a singleton class
 //
@@ -54,10 +56,10 @@ class Domain
         // Grid Hilbert index decomposition
         Array<uint> domain_bounds;
 
-        // Neighbour ranks
-        Array<uint> neighbour_ranks;
+        // Grid sizes
+        Tuple<dim> grid_sizes;
 
-        // Patch Cartesian grid sizes
+        // Patch sizes
         Tuple<dim> patch_sizes;
 
         //====================================================================//
@@ -70,7 +72,10 @@ class Domain
         //  Domain communication descriptors
         //====================================================================//
         // Local buffer marking
-        Array<GhostMarking> local_buffer_markings;
+        Array<GhostMarking> local_markings;
+
+        // Neighbour ranks
+        Array<uint> neighbour_ranks;
 
         // Neighbours incoming buffers marking
         Array< Array<GhostMarking> > recv_buffer_markings;
@@ -89,17 +94,24 @@ class Domain
         //====================================================================//
         //  Initialization methods
         //====================================================================//
-        // Identify neighbour ranks
-        void Identify_neighbour_ranks();
+        // Sets initial domain bounds
+        void Initialize_domain_bounds();
 
+        // Identifies domain bounds
+        void Identify_domain_bounds()
+
+        // Identifies communication descriptors
+        void Identify_comm_descriptors();
+
+        // Default
         /// FIXME /// Either remove or switch to c++11: = delete
-        // default initializer
         Domain() {}
 
     public:
 
         // Construction
-        Domain(const uint, const uint, const Tuple<dim> &);
+        /// FIXME /// Data initialization required
+        Domain(const Tuple<dim> &, const Tuple<dim> &);
 
         // Deallocation
         ~Domain();
@@ -110,8 +122,8 @@ class Domain
         // Get rank
         inline uint Get_rank() const { return rank; }
 
-        // Get Hilbert index range
-        uint Get_patch_min_index() const { return domain_bounds[rank]; }
+        // Get patches index range
+        inline uint Get_patch_min_index() const { return domain_bounds[rank]; }
         uint Get_patch_max_index() const { return domain_bounds[rank + 1]; }
 
         //====================================================================//

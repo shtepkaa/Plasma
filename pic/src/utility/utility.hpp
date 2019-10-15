@@ -47,60 +47,41 @@ template<typename Type>
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Common algorithms generic implementaions
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Binary search
 //============================================================================//
-// 
 template<typename Type>
-uint Binary_search(const Array<Type> & arr, const Type & val)
+uint Binary_search(const uint size, const Type * arr, const Type & val)
 {
-    uint ind = (arr.Get_size() - 1) >> 1;
+    // Zero size specialization
+    if (!size) { return -1; }
 
-    for (uint range = ind; range; )
+    uint end = size - 1;
+
+    // Out of bounds specialization
+    if (arr[end] <= val) { return end; }
+
+    // General case specialization
+    uint start = 0;
+    uint ind = end >> 1;
+
+    while (start < ind)
     {
-        if (range > 1) { range = (range + 1) >> 1; }
+        if (arr[ind] > val) { end = ind; }
+        else { start = ind; }
 
-        if (arr[ind] > val) { ind -= range; }
-        else if (arr[ind + 1] < val) { ind += range; }
-        else { break; }
+        ind = start + ((end - start) >> 1);
     }
 
     return ind;
 }
 
-
-unsigned Binary_search(
-  6     const unsigned size, const unsigned * arr, const unsigned val
-  7 )
-  8 {
-  9     unsigned start = 0;
- 10     unsigned end = size - 1;
- 11
- 12     unsigned len = size - 1;
- 13
- 14     unsigned ind = len >> 1;
- 15
- 16     //while (start < end - 1)
- 17     while (len > 1)
- 18     {
- 19         if (arr[ind] > val)
- 20         {
- 21             //end = ind;
- 22             //ind = start + ((end - start) >> 1);
- 23             len = ind - start;
- 24             ind = start + (len >> 1);
- 25         }
- 26         else
- 27         {
- 28             //start = ind;
- 29             //ind = start + ((end - start) >> 1);
- 30             len = ind - start;
- 31             ind = start + ((end - start) >> 1);
- 32         }
- 33     }
- 34
- 35     return ind;
- 36 }                      
+/// TODO /// Move sort algorithms here
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -234,12 +215,14 @@ Tuple & Tuple::operator+=(const Tuple & tup)
 //  Data management
 //============================================================================//
 template<typename Type>
-void Array::Reallocate(const uint size)
+void Array::Reallocate(const uint siz)
 {
-    if (size != new_size)
+    if (size != siz)
     {
         size = siz;
-        data = (Type *)realloc(data, size * sizeof(Type));
+
+        if (!siz) { free(data); data = NULL; }
+        else { data = (Type *)realloc(data, size * sizeof(Type)); }
     }
 }
 

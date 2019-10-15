@@ -28,6 +28,24 @@ static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
 }
 
 //============================================================================//
+//  Indices base 3
+//============================================================================//
+// 
+template<Dim dim, uint base>
+static void Multiindex(const uint ind, Tuple<dim> & multiind)
+{
+    uint tmp = ind;
+
+    for (int d = 0; d < dim - 1; ++d)
+    {
+        multiind[d] = tmp % base;
+        tmp /= base;
+    }
+
+    multiind[dim - 1] = tmp;
+}
+
+//============================================================================//
 //  Initialize markings
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
@@ -55,22 +73,14 @@ void Patch::Initialize_markings(const uint index)
         recv_offsets[d][2] = send_offsets[d][0] + send_offsets[d][2];
     }
 
+    Tuple<dim> indices;
+
     // For all ghosts
 #pragma omp parallel for
     for (int s = 0; s < ghost_markings.Get_size(); ++s)
     {
-        uint index = s;
-
         // Calculate indices which are in { 0, 1, 2 }
-        Tuple<dim> indices;
-
-        for (int d = 0; d < dim - 1; ++d)
-        {
-            indices[d] = index % 3;
-            index /= 3;
-        }
-
-        indices[dim - 1] = index;
+        Multiindex<dim, 3>(s, indices);
 
         // Identify index
         ghost_markings[s].index
@@ -78,19 +88,15 @@ void Patch::Initialize_markings(const uint index)
                 index:
                 Index<dim, ord>(layer_sizes, (layer_coordinates + indices - 1));
 
-        // Identify sizes
+        ghost_markings[s].send_offset = 0;
+        ghost_markings[s].recv_offset = 0;
+
+        // Identify sizes, send and receive offsets
         for (int d = 0; d < dim; ++d)
         {
             ghost_markings[s].sizes[d]
                 = (indices[d] - 1)? ghost_width: sizes[indices[d]];
-        }
 
-        // Identify send and receive offsets
-        ghost_markings[s].send_offset = 0;
-        ghost_markings[s].recv_offset = 0;
-
-        for (int d = 0; d < dim; ++d)
-        {
             ghost_markings[s].send_offset += send_offsets[d][indices[d]];
             ghost_markings[s].recv_offset += recv_offsets[d][indices[d]];
         }

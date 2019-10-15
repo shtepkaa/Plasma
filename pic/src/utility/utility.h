@@ -13,7 +13,7 @@ namespace maxwell {
 //============================================================================//
 //  Copy
 //============================================================================//
-// Implements BLAS-like Copy,
+// Implements BLAS-like array copy,
 // works correctly for copy-constructible types
 template<typename Type>
 void Copy(const uint, const Type *, const uint, Type *, const uint);
@@ -60,12 +60,25 @@ uint Sub_hypercube_count(const uint, const uint);
 // Counts total amount of sub-hypercubes in cube
 uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Common algorithms generic implementaions
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Binary search
 //============================================================================//
-// Counts total amount of sub-hypercubes in cube
+// Identifies the left bound of interval (including left, excluding right),
+// which contains a given value
+//
+// Input parameter: size -- the count of bounds
+// Input parameter: arr -- the array of interval bounds
+// Input parameter: val -- a reference value
+//
+// Return value: the index in array of the left bound of the found interval
+// Returns uint(-1) when size is zero
 template<typename Type>
-uint Binary_search(const Array<Type> & arr, const Type & val);
+uint Binary_search(const uint size, const Type * arr, const Type & val);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
