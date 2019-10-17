@@ -29,9 +29,11 @@ struct GhostMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements patch (aka hyperrectangular part) of a grid in the simulation box
+// -----------------------------------------------------------------------------  
 // Template parameter: dim -- dimensionality of the grid
 // Template parameter: ord -- order of patch numeration
 // Template parameter: Type -- supported arithmetic type
+// -----------------------------------------------------------------------------  
 template<Dim dim, Order ord, typename Type = double>
 class Patch
 {
@@ -101,6 +103,9 @@ class Patch
 
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
+
+        void Set_ghost(const uint, const Type *);
+        void Get_ghost(const uint, Type *) const;
 };
 
 } // namespace maxwell

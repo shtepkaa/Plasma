@@ -71,14 +71,12 @@ uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 // Identifies the left bound of interval (including left, excluding right),
 // which contains a given value
 //
-// Input parameter: size -- the count of bounds
+// Returns uint(-1) if array is empty
+//
 // Input parameter: arr -- the array of interval bounds
 // Input parameter: val -- a reference value
-//
-// Return value: the index in array of the left bound of the found interval
-// Returns uint(-1) when size is zero
 template<typename Type>
-uint Binary_search(const uint size, const Type * arr, const Type & val);
+uint Binary_search(const Array<Type> & arr, const Type & val);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -186,6 +184,10 @@ class Array
 
         // Deallocation
         ~Array() { Reallocate(); }
+
+            /// !!! /// Is it really neaded?
+            // Insertion
+            void Insert(const Type &, const uint, const uint = size);
 
         // Get size
         inline uint Get_size() const { return size; }

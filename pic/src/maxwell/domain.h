@@ -27,18 +27,38 @@ struct BufferMarking
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+//  TransferDescriptor
+//
+////////////////////////////////////////////////////////////////////////////////
+template<typename Type>
+struct TransferDescriptor
+{
+    uint rank;
+
+    Array<BufferMarking> buffer_markings;
+
+    Type * send_buffer;
+    Type * recv_buffer;
+
+    TransferDescriptor(const uint, const uint);
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
 //  Domain
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements data structure per process corresponding to a single MPI rank
+// -----------------------------------------------------------------------------  
 // Template parameter: dim -- the dimensionality of the grid
 // Template parameter: ord -- the order of patch numeration
 // Template parameter: Type -- the supported arithmetic type
-//
+// -----------------------------------------------------------------------------  
 /// !!! /// Implementation should probably be changed to a singleton class
-//
+// -----------------------------------------------------------------------------  
 /// !!! /// Type should probably be changed to some data structure, representing
 /// !!! /// fields and particles
+// -----------------------------------------------------------------------------  
 template<Dim dim, Order ord, typename Type = double>
 class Domain
 {
@@ -69,27 +89,32 @@ class Domain
         Array< Patch<dim, ord, Type> * > patches;
 
         //====================================================================//
-        //  Domain communication descriptors
+        //  Intra-domain communication descriptors
         //====================================================================//
         // Local buffer marking
         Array<GhostMarking> local_markings;
 
-        // Neighbour ranks
-        Array<uint> neighbour_ranks;
+        //====================================================================//
+        //  Inter-domain communication descriptors
+        //====================================================================//
+        Array<TransferDescriptor *> transfer_descriptors;
 
-        // Neighbours incoming buffers marking
-        Array< Array<GhostMarking> > recv_buffer_markings;
+            /// // Neighbour ranks
+            /// Array<uint> neighbour_ranks;
 
-        // __device__
-        // neighbours incoming buffers
-        Array<Type *> recv_buffers;
+            /// // Neighbour incoming buffers marking
+            /// Array< Array<GhostMarking> > recv_buffer_markings;
 
-        // Neighbours outcoming buffers marking
-        Array< Array<GhostMarking> > send_buffer_markings;
+            /// // __device__
+            /// // Neighbour incoming buffers
+            /// Array<Type *> recv_buffers;
 
-        // __device__
-        // Neighbours outcoming buffers
-        Array<Type *> send_buffers;
+            /// // Neighbour outcoming buffers marking
+            /// Array< Array<GhostMarking> > send_buffer_markings;
+
+            /// // __device__
+            /// // Neighbour outcoming buffers
+            /// Array<Type *> send_buffers;
 
         //====================================================================//
         //  Initialization methods
@@ -98,10 +123,13 @@ class Domain
         void Initialize_domain_bounds();
 
         // Identifies domain bounds
-        void Identify_domain_bounds()
+        void Identify_domain_bounds();
 
-        // Identifies communication descriptors
-        void Identify_comm_descriptors();
+            /// // Allocates patches
+            /// void Allocate_patches();
+
+        // Identifies transfer descriptors
+        void Identify_transfer_descriptors();
 
         // Default
         /// FIXME /// Either remove or switch to c++11: = delete

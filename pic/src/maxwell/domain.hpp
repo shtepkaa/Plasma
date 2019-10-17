@@ -5,6 +5,25 @@
 
 namespace maxwell {
 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  TransferDescriptor
+//
+////////////////////////////////////////////////////////////////////////////////
+TransferDescriptor::TransferDescriptor(
+    const uint transfer_rank, const uint patch_count
+):
+    rank(transfer_rank),
+    buffer_markings(patch_count),
+    send_buffer(NULL),
+    recv_buffer(NULL)
+{} 
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Domain
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
 //  Initialize domain bounds
 //============================================================================//
@@ -46,45 +65,56 @@ void Domain::Identify_domain_bounds()
 }
 
 //============================================================================//
-//  Identify communication descriptors
+//  Identify transfer descriptors
 //============================================================================//
-// Identifies communication descriptors
+// Identifies transfer descriptors
 template<Dim dim, Order ord, typename Type>
-void Domain::Identify_comm_descriptors()
+void Domain::Identify_transfer_descriptors()
 {
-    neighbour_ranks.Reallocate(range); /// !!! /// Overkill
-    patches.Reallocate(Get_patch_max_index() - Get_patch_min_index());
+    // Allocate
+    neighbour_ranks.Reallocate(range);
 
     uint neighbour_count = 0;
+    uint trial_rank;
+    uint trial_position;
 
     uint index;
-    uint neighbour_rank;
 
+    // For each patch in the domain
     for (int p = 0; p < patches.Get_size(); ++p)
     {
         const Array<GhostMarkings> & markings = patches[p].Get_ghost_markings();
 
+        // Examine each ghost marking
         for (int m = 0; m < markings.Get_size(); ++m)
         {
-            index = markings.index;
+            // If marking does not correspond to patch itself
+            if (m != markings.Get_index())
+            {
+                // Identify MPI rank associated with the marking
+                trial_rank = Binary_search(domain_bounds, markings.index);
 
-            if (index != Get_patch_min_index() + p)
-            {
-                for (int n = 0; n < neighbour_count; ++n)
+                // Identify the position of the rank in neighbour ranks array
+                trial_position = Binary_search(neighbour_ranks, trial_rank);
+
+                // Try to add the trial rank to array of neighbour ranks
+                if (
+                    !neighbour_count
+                    || trial_rank != neighbour_ranks[trial_position] 
+                )
                 {
-                    neighbour_rank
-                        = Binary_search(
-                            domain_bounds.Get_size(),
-                            domain_bounds.Export_data(),
-                            index
-                        );
+                    neighbour_ranks.Insert(
+                        trial_rank, trial_position, neighbour_count
+                    );
+
+                    ++neighbour_count;
                 }
-            }
-            else
-            {
             }
         }
     }
+
+    // Shrink to fit
+    neighbour_ranks.Reallocate(neighbour_count);
 }
 
 //============================================================================//
@@ -95,20 +125,17 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     rank(0),
     range(0),
     domain_bounds(),
-    neighbour_ranks(),
     grid_sizes(grid_sizs),
     patch_sizes(patch_sizs),
     patches(),
     local_markings(),
-    recv_buffer_markings(),
-    recv_buffers(),
-    send_buffer_markings(),
-    send_buffers()
+    transfer_descriptor()
 {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &range);
 
     Initialize_domain_bounds();
+    patches.Reallocate(Get_patch_max_index() - Get_patch_min_index());
 
     if (range)
     {

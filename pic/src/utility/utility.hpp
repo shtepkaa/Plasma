@@ -56,12 +56,12 @@ template<typename Type>
 //  Binary search
 //============================================================================//
 template<typename Type>
-uint Binary_search(const uint size, const Type * arr, const Type & val)
+uint Binary_search(const Array<Type> & arr, const Type & val)
 {
     // Zero size specialization
-    if (!size) { return -1; }
+    if (!arr.Get_size()) { return -1; }
 
-    uint end = size - 1;
+    uint end = arr.Get_size() - 1;
 
     // Out of bounds specialization
     if (arr[end] <= val) { return end; }
@@ -264,6 +264,33 @@ Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
 {
     if (dat) { Set(siz, dat); }
     else { Reallocate(siz); }
+}
+
+//============================================================================//
+//  Insertion
+//============================================================================//
+template<typename Type>
+void Array::Insert(const Type & val, const uint pos, const uint end)
+{
+    if (end == size) { Reallocate(size + 1); }
+
+    uint len = end - pos;
+
+    if (len < omp_get_num_threads())
+    {
+        for (int ind = end; ind > pos; --ind) { data[ind] = data[ind - 1]; }
+    }
+    else
+    {
+        Type * buf = (Type *)malloc(len * sizeof(Type));
+
+        Copy(len, data + pos, 1, buf, 1);
+        Copy(len, buf, 1, data + pos + 1, 1);
+
+        free(buf);
+    }
+
+    data[pos] = val;
 }
 
 } // namespace maxwell
