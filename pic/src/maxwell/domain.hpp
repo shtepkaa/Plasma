@@ -7,10 +7,10 @@ namespace maxwell {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  TransferDescriptor
+//  TransferDescriptorData
 //
 ////////////////////////////////////////////////////////////////////////////////
-TransferDescriptor::TransferDescriptor(
+TransferDescriptorData::TransferDescriptorData(
     const uint transfer_rank, const uint patch_count
 ):
     rank(transfer_rank),
@@ -19,15 +19,31 @@ TransferDescriptor::TransferDescriptor(
     recv_buffer(NULL)
 {} 
 
+TransferDescriptorData::~TransferDescriptorData()
+{
+    CUDA_CALL(cudaFree(recv_buffer));
+    CUDA_CALL(cudaFree(send_buffer));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  TransferDescriptor
+//
+////////////////////////////////////////////////////////////////////////////////
+TransferDescriptor::TransferDescriptor(
+    const uint transfer_rank, const uint patch_count
+):
+    data(new TransferDescriptorData(transfer_rank, patch_count))
+{} 
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  Domain
 //
 ////////////////////////////////////////////////////////////////////////////////
-//============================================================================//
+//==============================================================================
 //  Initialize domain bounds
-//============================================================================//
-// Sets initial domain bounds
+//==============================================================================
 template<Dim dim, Order ord, typename Type>
 void Domain::Initialize_domain_bounds()
 {
@@ -54,9 +70,9 @@ void Domain::Initialize_domain_bounds()
     }
 }
 
-//============================================================================//
+//==============================================================================
 //  Identify domain bounds
-//============================================================================//
+//==============================================================================
 // Identifies domain bounds
 template<Dim dim, Order ord, typename Type>
 void Domain::Identify_domain_bounds()
@@ -64,10 +80,19 @@ void Domain::Identify_domain_bounds()
     /// TODO ///
 }
 
-//============================================================================//
+
+//==============================================================================
+//  Binary search
+//==============================================================================
+template<typename Type>
+static bool operator<(const TransferDescriptor<Type> & desc, const Type & val)
+{
+    return desc.data->rank < val;
+}
+
+//==============================================================================
 //  Identify transfer descriptors
-//============================================================================//
-// Identifies transfer descriptors
+//==============================================================================
 template<Dim dim, Order ord, typename Type>
 void Domain::Identify_transfer_descriptors()
 {
@@ -117,9 +142,9 @@ void Domain::Identify_transfer_descriptors()
     neighbour_ranks.Reallocate(neighbour_count);
 }
 
-//============================================================================//
+//==============================================================================
 //  Constructor
-//============================================================================//
+//==============================================================================
 template<Dim dim, Order ord, typename Type>
 Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     rank(0),
@@ -135,7 +160,9 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     MPI_Comm_size(MPI_COMM_WORLD, &range);
 
     Initialize_domain_bounds();
+
     patches.Reallocate(Get_patch_max_index() - Get_patch_min_index());
+    /// TODO /// Patch allocation
 
     if (range)
     {
@@ -144,18 +171,17 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     }
 }
 
-//============================================================================//
+//==============================================================================
 //  Deallocation
-//============================================================================//
+//==============================================================================
 template<Dim dim, Order ord, typename Type>
 Domain::~Domain()
 {
-    for (uint p = 0; p < patches.Get_size(); ++p)
-    {
-        delete patches[p];
+    for (uint p = 0; p < patches.Get_size(); ++p) { delete patches[p]; }
 
-        CUDA_CALL(cudaFree(recv_buffers[p]));
-        CUDA_CALL(cudaFree(send_buffers[p]));
+    for (uint t = 0; t < transfer_descriptor.Get_size(); ++t)
+    {
+        delete transfer_descriptor[t];
     }
 }
 

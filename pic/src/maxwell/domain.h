@@ -13,6 +13,7 @@ namespace maxwell {
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements buffer marking 
+////////////////////////////////////////////////////////////////////////////////
 /// ??? /// template<Dim dim>
 struct BufferMarking
 {
@@ -27,20 +28,65 @@ struct BufferMarking
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+//  TransferDescriptorData
+//
+////////////////////////////////////////////////////////////////////////////////
+// Implements process communication descriptor data
+// -----------------------------------------------------------------------------  
+// Template parameter:
+//     Type -- the supported arithmetic type
+////////////////////////////////////////////////////////////////////////////////
+template<typename Type>
+struct TransferDescriptorData
+{
+    //==========================================================================
+    //  Data
+    //==========================================================================
+    // Communication rank
+    uint rank;
+
+    // Buffers marking
+    Array<BufferMarking> buffer_markings;
+
+    // __device__
+    // Incoming buffer
+    Type * send_buffer;
+
+    // __device__
+    // Outcoming buffer
+    Type * recv_buffer;
+
+    //==========================================================================
+    //  Data management
+    //==========================================================================
+    TransferDescriptorData(const uint, const uint);
+    ~TransferDescriptorData();
+};
+
+////////////////////////////////////////////////////////////////////////////////
+//
 //  TransferDescriptor
 //
 ////////////////////////////////////////////////////////////////////////////////
+// Implements process communication descriptor
+// -----------------------------------------------------------------------------  
+// Template parameter:
+//     Type -- the supported arithmetic type
+////////////////////////////////////////////////////////////////////////////////
 template<typename Type>
-struct TransferDescriptor
+class TransferDescriptor
 {
-    uint rank;
+    private:
 
-    Array<BufferMarking> buffer_markings;
+        TransferDescriptorData<Type> * data;
 
-    Type * send_buffer;
-    Type * recv_buffer;
+    public:
 
-    TransferDescriptor(const uint, const uint);
+        //======================================================================
+        //  Data management
+        //======================================================================
+        TransferDescriptor(const uint, const uint);
+        ~TransferDescriptor() { delete data; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,25 +94,27 @@ struct TransferDescriptor
 //  Domain
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements data structure per process corresponding to a single MPI rank
+// Implements numerical grid data structure per process corresponding to
+// a single MPI rank
 // -----------------------------------------------------------------------------  
-// Template parameter: dim -- the dimensionality of the grid
-// Template parameter: ord -- the order of patch numeration
-// Template parameter: Type -- the supported arithmetic type
+// Template parameters:
+//     dim -- the dimensionality of the grid
+//     ord -- the order of patch numeration
+//     Type -- the supported arithmetic type
 // -----------------------------------------------------------------------------  
 /// !!! /// Implementation should probably be changed to a singleton class
 // -----------------------------------------------------------------------------  
 /// !!! /// Type should probably be changed to some data structure, representing
 /// !!! /// fields and particles
-// -----------------------------------------------------------------------------  
+////////////////////////////////////////////////////////////////////////////////
 template<Dim dim, Order ord, typename Type = double>
 class Domain
 {
     private:
 
-        //====================================================================//
+        //======================================================================
         //  Geometry descriptors
-        //====================================================================//
+        //======================================================================
         // MPI rank
         uint rank;
 
@@ -82,43 +130,26 @@ class Domain
         // Patch sizes
         Tuple<dim> patch_sizes;
 
-        //====================================================================//
-        //  Data
-        //====================================================================//
+        //======================================================================
+        //  Grid data in patches
+        //======================================================================
         // Patches arranged in specified Order
         Array< Patch<dim, ord, Type> * > patches;
 
-        //====================================================================//
+        //======================================================================
         //  Intra-domain communication descriptors
-        //====================================================================//
+        //======================================================================
         // Local buffer marking
         Array<GhostMarking> local_markings;
 
-        //====================================================================//
+        //======================================================================
         //  Inter-domain communication descriptors
-        //====================================================================//
-        Array<TransferDescriptor *> transfer_descriptors;
+        //======================================================================
+        Array<TransferDescriptor> transfer_descriptors;
 
-            /// // Neighbour ranks
-            /// Array<uint> neighbour_ranks;
-
-            /// // Neighbour incoming buffers marking
-            /// Array< Array<GhostMarking> > recv_buffer_markings;
-
-            /// // __device__
-            /// // Neighbour incoming buffers
-            /// Array<Type *> recv_buffers;
-
-            /// // Neighbour outcoming buffers marking
-            /// Array< Array<GhostMarking> > send_buffer_markings;
-
-            /// // __device__
-            /// // Neighbour outcoming buffers
-            /// Array<Type *> send_buffers;
-
-        //====================================================================//
+        //======================================================================
         //  Initialization methods
-        //====================================================================//
+        //======================================================================
         // Sets initial domain bounds
         void Initialize_domain_bounds();
 
@@ -137,6 +168,9 @@ class Domain
 
     public:
 
+        //======================================================================
+        //  Data management
+        //======================================================================
         // Construction
         /// FIXME /// Data initialization required
         Domain(const Tuple<dim> &, const Tuple<dim> &);
@@ -144,9 +178,9 @@ class Domain
         // Deallocation
         ~Domain();
 
-        //====================================================================//
+        //======================================================================
         //  Get methods
-        //====================================================================//
+        //======================================================================
         // Get rank
         inline uint Get_rank() const { return rank; }
 
@@ -154,14 +188,15 @@ class Domain
         inline uint Get_patch_min_index() const { return domain_bounds[rank]; }
         uint Get_patch_max_index() const { return domain_bounds[rank + 1]; }
 
-        //====================================================================//
+        //======================================================================
         //  Get methods
-        //====================================================================//
+        //======================================================================
         // Compute patch count
         inline uint Get_patch_count() const { return patches.Get_size(); }
 
             /// // copy patch to CPU
             /// void Copy_patch(const uint, const Type *) const;
+
 };
 
 } // namespace maxwell

@@ -33,7 +33,7 @@ struct GhostMarking
 // Template parameter: dim -- dimensionality of the grid
 // Template parameter: ord -- order of patch numeration
 // Template parameter: Type -- supported arithmetic type
-// -----------------------------------------------------------------------------  
+////////////////////////////////////////////////////////////////////////////////
 template<Dim dim, Order ord, typename Type = double>
 class Patch
 {
