@@ -107,7 +107,7 @@ class TransferDescriptor
 /// !!! /// Type should probably be changed to some data structure, representing
 /// !!! /// fields and particles
 ////////////////////////////////////////////////////////////////////////////////
-template<Dim dim, Order ord, typename Type = double>
+template<Dim dim, Order ord, typename Type>
 class Domain
 {
     private:

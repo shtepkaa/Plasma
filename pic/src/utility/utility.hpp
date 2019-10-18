@@ -55,13 +55,13 @@ template<typename Type>
 //==============================================================================
 //  Binary search
 //==============================================================================
-template<typename Type>
-uint Binary_search(const Array<Type> & arr, const Type & val)
+template<uint size, typename ArrayType, typename ValueType>
+uint Binary_search(const ArrayType & arr, const ValueType & val)
 {
     // Zero size specialization
-    if (!arr.Get_size()) { return -1; }
+    if (!size) { return -1; }
 
-    uint end = arr.Get_size() - 1;
+    uint end = size - 1;
 
     // Out of bounds specialization
     if (arr[end] <= val) { return end; }

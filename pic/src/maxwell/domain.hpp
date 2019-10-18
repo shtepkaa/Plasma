@@ -44,6 +44,7 @@ TransferDescriptor::TransferDescriptor(
 //==============================================================================
 //  Initialize domain bounds
 //==============================================================================
+/// FIXME ///
 template<Dim dim, Order ord, typename Type>
 void Domain::Initialize_domain_bounds()
 {
@@ -80,7 +81,6 @@ void Domain::Identify_domain_bounds()
     /// TODO ///
 }
 
-
 //==============================================================================
 //  Binary search
 //==============================================================================
@@ -88,6 +88,12 @@ template<typename Type>
 static bool operator<(const TransferDescriptor<Type> & desc, const Type & val)
 {
     return desc.data->rank < val;
+}
+
+template<typename Type>
+static bool operator>=(const TransferDescriptor<Type> & desc, const Type & val)
+{
+    return desc.data->rank >= val;
 }
 
 //==============================================================================
