@@ -39,9 +39,9 @@ class Patch
 {
     private:
 
-        //====================================================================//
+        //======================================================================
         //  Geometry descriptors
-        //====================================================================//
+        //======================================================================
         // Layer sizes of the grid in patches
         Tuple<dim> layer_sizes;
 
@@ -60,9 +60,9 @@ class Patch
         // Ghost markings in lexicographic order
         Array<GhostMarking> ghost_markings;
 
-        //====================================================================//
+        //======================================================================
         //  Data
-        //====================================================================//
+        //======================================================================
         // Data size including surrounding ghosts,
         // which is the product of extended sizes
         uint data_size;
@@ -71,9 +71,9 @@ class Patch
         // Patch data including surrounding ghosts
         Type * data;
 
-        //====================================================================//
+        //======================================================================
         //  Initialization methods
-        //====================================================================//
+        //======================================================================
         // Initializes ghost markings
         void Initialize_markings(const uint);
 
@@ -95,12 +95,16 @@ class Patch
         // Deallocation
         ~Patch() { CUDA_CALL(cudaFree(data)); }
 
+        //======================================================================
+        //  Access / mutate methods
+        //======================================================================
         // Get index of the patch
         inline uint Get_index() const { return ghost_markings.Get_size() >> 1; }
 
         // Get ghost markings
         const Array<GhostMarking> & Get_ghost_markings() const;
 
+        // Set / get element
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
 

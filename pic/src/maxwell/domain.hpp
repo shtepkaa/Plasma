@@ -103,13 +103,14 @@ template<Dim dim, Order ord, typename Type>
 void Domain::Identify_transfer_descriptors()
 {
     // Allocate
-    neighbour_ranks.Reallocate(range);
+    /// FIXME /// Probably too big to be true :)
+    transfer_descriptors.Reallocate(range);
 
     uint neighbour_count = 0;
     uint trial_rank;
-    uint trial_position;
+    uint trial_pos;
 
-    uint index;
+    /// ??? /// uint index;
 
     // For each patch in the domain
     for (int p = 0; p < patches.Get_size(); ++p)
@@ -126,16 +127,17 @@ void Domain::Identify_transfer_descriptors()
                 trial_rank = Binary_search(domain_bounds, markings.index);
 
                 // Identify the position of the rank in neighbour ranks array
-                trial_position = Binary_search(neighbour_ranks, trial_rank);
+                trial_pos = Binary_search(transfer_descriptors, trial_rank);
 
                 // Try to add the trial rank to array of neighbour ranks
                 if (
                     !neighbour_count
-                    || trial_rank != neighbour_ranks[trial_position] 
+                    || trial_rank != transfer_descriptors[trial_pos]->rank; 
                 )
                 {
-                    neighbour_ranks.Insert(
-                        trial_rank, trial_position, neighbour_count
+                    transfer_descriptors[neighbour_count].Set(
+                    transfer_descriptors.Insert(
+                        trial_rank, trial_pos, neighbour_count
                     );
 
                     ++neighbour_count;
@@ -145,7 +147,7 @@ void Domain::Identify_transfer_descriptors()
     }
 
     // Shrink to fit
-    neighbour_ranks.Reallocate(neighbour_count);
+    transfer_descriptors.Reallocate(neighbour_count);
 }
 
 //==============================================================================
@@ -167,7 +169,7 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
 
     Initialize_domain_bounds();
 
-    patches.Reallocate(Get_patch_max_index() - Get_patch_min_index());
+    patches.Reallocate(Get_patch_count());
     /// TODO /// Patch allocation
 
     if (range)
@@ -190,6 +192,14 @@ Domain::~Domain()
         delete transfer_descriptor[t];
     }
 }
+
+//==============================================================================
+//  Get patches index range
+//==============================================================================
+uint Get_patch_min_index(uint ind = rank) const { return domain_bounds[ind]; }
+uint Get_patch_max_index(uint ind = rank) const { return domain_bounds[ind + 1]; }
+
+uint Get_patch_count(const uint = rank) const { return Get_patch_max_index(rank) - Get_patch_min_index(rank); }
 
 } // namespace maxwell
 

@@ -126,11 +126,13 @@ class Domain
         // Patch sizes
         Tuple<dim> patch_sizes;
 
-        //======================================================================
-        //  Grid data in patches
-        //======================================================================
-        // Patches arranged in specified Order
-        Array< Patch<dim, ord, Type> * > patches;
+            //======================================================================
+            //  Grid data in patches
+            //======================================================================
+            // Patches arranged in specified Order
+            /// FIXME /// Create Patch reference struct and use insted of raw ptrs
+            Array< Patch<dim, ord, Type> * > patches;
+            /// !!! /// In result it should be: Array< Patch<dim, ord, Type> > patches;
 
         //======================================================================
         //  Intra-domain communication descriptors
@@ -158,37 +160,35 @@ class Domain
         // Identifies transfer descriptors
         void Identify_transfer_descriptors();
 
-        // Default
-        /// FIXME /// Either remove or switch to c++11: = delete
-        Domain() {}
+            // Default
+            /// FIXME /// Either remove or switch to c++11: = delete
+            Domain() {}
 
     public:
 
         //======================================================================
         //  Data management
         //======================================================================
-        // Construction
-        /// FIXME /// Data initialization required
-        Domain(const Tuple<dim> &, const Tuple<dim> &);
+            // Construction
+            /// FIXME /// Data initialization required
+            /// FIXME /// Patch sizes, width etc. should be included here
+            Domain(const Tuple<dim> &, const Tuple<dim> &);
 
-        // Deallocation
+        // Deallocate
         ~Domain();
 
         //======================================================================
-        //  Get methods
+        //  Access / mutate methods
         //======================================================================
-        // Get rank
+        // Returns MPI rank for the domain
         inline uint Get_rank() const { return rank; }
 
-        // Get patches index range
-        inline uint Get_patch_min_index() const { return domain_bounds[rank]; }
-        uint Get_patch_max_index() const { return domain_bounds[rank + 1]; }
+        // Returns patch indices range for a given domain
+        uint Get_patch_min_index(const uint = rank) const;
+        uint Get_patch_max_index(const uint = rank) const;
 
-        //======================================================================
-        //  Get methods
-        //======================================================================
-        // Compute patch count
-        inline uint Get_patch_count() const { return patches.Get_size(); }
+        // Computes patch count for a given domain
+        uint Get_patch_count(const uint = rank) const;
 
             /// // copy patch to CPU
             /// void Copy_patch(const uint, const Type *) const;
