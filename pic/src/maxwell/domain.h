@@ -74,19 +74,15 @@ struct TransferDescriptorData
 //     Type -- the supported arithmetic type
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Type>
-class TransferDescriptor
+struct TransferDescriptor
 {
-    private:
+    TransferDescriptorData<Type> * data;
 
-        TransferDescriptorData<Type> * data;
-
-    public:
-
-        //======================================================================
-        //  Data management
-        //======================================================================
-        TransferDescriptor(const uint, const uint);
-        ~TransferDescriptor() { delete data; }
+    //==========================================================================
+    //  Data management
+    //==========================================================================
+    TransferDescriptor(const uint, const uint);
+    ~TransferDescriptor() { delete data; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

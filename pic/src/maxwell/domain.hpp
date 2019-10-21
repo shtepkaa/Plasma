@@ -82,18 +82,18 @@ void Domain::Identify_domain_bounds()
 }
 
 //==============================================================================
-//  Binary search
+//  Comparison
 //==============================================================================
 template<typename Type>
-static bool operator<(const TransferDescriptor<Type> & desc, const Type & val)
+static bool operator<=(const TransferDescriptor<Type> & desc, const Type & val)
 {
-    return desc.data->rank < val;
+    return desc.data->rank <= val;
 }
 
 template<typename Type>
-static bool operator>=(const TransferDescriptor<Type> & desc, const Type & val)
+static bool operator>(const TransferDescriptor<Type> & desc, const Type & val)
 {
-    return desc.data->rank >= val;
+    return desc.data->rank > val;
 }
 
 //==============================================================================
