@@ -55,13 +55,13 @@ template<typename Type>
 //==============================================================================
 //  Binary search
 //==============================================================================
-template<uint size, typename ArrayType, typename ValueType>
-uint Binary_search(const ArrayType & arr, const ValueType & val)
+template<typename ElementType, typename ValueType>
+uint Binary_search(const Array<ElementType> & arr, const ValueType & val)
 {
     // Zero size specialization
-    if (!size) { return -1; }
+    if (!arr.Get_size()) { return -1; }
 
-    uint end = size - 1;
+    uint end = arr.Get_size() - 1;
 
     // Out of bounds specialization
     if (arr[end] <= val) { return end; }
@@ -81,6 +81,9 @@ uint Binary_search(const ArrayType & arr, const ValueType & val)
     return ind;
 }
 
+//==============================================================================
+//
+//==============================================================================
 /// TODO /// Move sort algorithms here
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,7 +167,11 @@ Type Product(const Tuple<size, Type> & tup, const uint len)
 //  Initialization
 //==============================================================================
 template<uint size, typename Type>
-void Tuple::Set(const Type * dat) { data[0] = 0; Copy(size, dat, 0, data, 1); }
+void Tuple::Set(const Type * dat)
+{
+    if (dat) { Copy(size, dat, 1, data, 1); }
+    else { Set(0); }
+}
 
 // Constructs a new Tuple
 // by the entries of the original Tuple undergone the mutator function
@@ -215,14 +222,26 @@ Tuple & Tuple::operator+=(const Tuple & tup)
 //  Data management
 //==============================================================================
 template<typename Type>
-void Array::Reallocate(const uint siz)
+void Array::Reallocate(const uint cap)
 {
-    if (size != siz)
+    if (capacity != cap)
     {
-        size = siz;
+        capacity = cap;
 
-        if (!siz) { free(data); data = NULL; }
-        else { data = (Type *)realloc(data, size * sizeof(Type)); }
+        if (!capacity) { free(data); data = NULL; }
+        else
+        {
+            Type * dat = (Type *)realloc(data, size * sizeof(Type))
+
+            if (dat) { data = dat; }
+            else
+            {
+                /// TODO /// Error handling
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        if (capacity < size) { size = capacity; }
     }
 }
 
@@ -230,16 +249,18 @@ void Array::Reallocate(const uint siz)
 //  Initialization
 //==============================================================================
 template<typename Type>
-void Array::Set(const uint siz, const Type & val)
+void Array::Set(const uint cap, const Type & val)
 {
-    Reallocate(siz);
+    Reallocate(cap);
+    size = capacity;
     Copy(size, &val, 0, data, 1);
 }
 
 template<typename Type>
-void Array::Set(const uint siz, const Type * dat)
+void Array::Set(const uint cap, const Type * dat)
 {
-    Reallocate(siz);
+    Reallocate(cap);
+    size = capacity;
     if (dat) { Copy(size, dat, 1, data, 1); }
 }
 
@@ -247,6 +268,7 @@ template<typename Type>
 void Array::Set(const Array & arr)
 {
     Reallocate(arr.size);
+    size = capacity;
     Copy(size, arr.data, 1, data, 1);
 }
 
@@ -254,43 +276,35 @@ void Array::Set(const Array & arr)
 //  Constructors
 //==============================================================================
 template<typename Type>
-Array::Array(const uint siz, const Type & val): size(0), data(NULL)
+Array::Array(const uint cap, const Type & val): capacity(0), size(0), data(NULL)
 {
-    Set(siz, val);
+    Set(cap, val);
 }
 
 template<typename Type>
-Array::Array(const uint siz, const Type * dat): size(0), data(NULL)
+Array::Array(const uint cap, const Type * dat): capacity(0), size(0), data(NULL)
 {
-    if (dat) { Set(siz, dat); }
-    else { Reallocate(siz); }
+    Set(cap, dat);
 }
 
 //==============================================================================
-//  Insertion
+//  Append
 //==============================================================================
 template<typename Type>
-void Array::Insert(const Type & val, const uint pos, const uint end)
+void Array::Append()
 {
-    if (end == size) { Reallocate(size + 1); }
+    if (capacity == size) { Reallocate(2 * size); }
 
-    uint len = end - pos;
+    ++size;
+}
 
-    if (len < omp_get_num_threads())
-    {
-        for (int ind = end; ind > pos; --ind) { data[ind] = data[ind - 1]; }
-    }
-    else
-    {
-        Type * buf = (Type *)malloc(len * sizeof(Type));
+template<typename Type>
+void Array::Append(const Type & val)
+{
+    if (capacity == size) { Reallocate(2 * size); }
 
-        Copy(len, data + pos, 1, buf, 1);
-        Copy(len, buf, 1, data + pos + 1, 1);
-
-        free(buf);
-    }
-
-    data[pos] = val;
+    data[size] = val;
+    ++size;
 }
 
 } // namespace maxwell

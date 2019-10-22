@@ -81,8 +81,15 @@ struct TransferDescriptor
     //==========================================================================
     //  Data management
     //==========================================================================
-    TransferDescriptor(const uint, const uint);
+    void Set(const uint, const uint);
+    TransferDescriptor(): data(NULL) {}
+    /// ??? /// TransferDescriptor(const uint, const uint);
     ~TransferDescriptor() { delete data; }
+
+    //==========================================================================
+    //  Access data fields
+    //==========================================================================
+    inline uint Get_rank() const { return data? data->rank: ~0; } 
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +177,6 @@ class Domain
         //  Data management
         //======================================================================
             // Construction
-            /// FIXME /// Data initialization required
             /// FIXME /// Patch sizes, width etc. should be included here
             Domain(const Tuple<dim> &, const Tuple<dim> &);
 

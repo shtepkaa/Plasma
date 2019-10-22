@@ -10,11 +10,9 @@ namespace maxwell {
 //  TransferDescriptorData
 //
 ////////////////////////////////////////////////////////////////////////////////
-TransferDescriptorData::TransferDescriptorData(
-    const uint transfer_rank, const uint patch_count
-):
+TransferDescriptorData::TransferDescriptorData(const uint transfer_rank):
     rank(transfer_rank),
-    buffer_markings(patch_count),
+    buffer_markings(),
     send_buffer(NULL),
     recv_buffer(NULL)
 {} 
@@ -30,11 +28,15 @@ TransferDescriptorData::~TransferDescriptorData()
 //  TransferDescriptor
 //
 ////////////////////////////////////////////////////////////////////////////////
-TransferDescriptor::TransferDescriptor(
-    const uint transfer_rank, const uint patch_count
-):
-    data(new TransferDescriptorData(transfer_rank, patch_count))
-{} 
+// [unsafe]
+void TransferDescriptor::Set(const uint transfer_rank)
+{
+    data = new TransferDescriptorData(transfer_rank);
+} 
+
+/// ??? /// TransferDescriptor::TransferDescriptor(const uint transfer_rank):
+/// ??? ///     data(new TransferDescriptorData(transfer_rank))
+/// ??? /// {} 
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -63,7 +65,7 @@ void Domain::Initialize_domain_bounds()
         uint patch_per_domain = total_patch_count / range;
         uint rem = total_patch_count % range;
 
-        for (uint r = 1; r < range + 1; ++r)
+        for (uint r = 1; r <= range; ++r)
         {
             domain_bounds[r]
                 = domain_bounds[r - 1] + patch_per_domain + (r < rem);
@@ -74,26 +76,56 @@ void Domain::Initialize_domain_bounds()
 //==============================================================================
 //  Identify domain bounds
 //==============================================================================
-// Identifies domain bounds
+// Collects the new domain bounds from all processes
 template<Dim dim, Order ord, typename Type>
 void Domain::Identify_domain_bounds()
 {
-    /// TODO ///
+    MPI_Allgather(
+        (void *)(domain_bounds + rank), 1, MPI_UNSIGNED, (void *)domain_bounds,
+        1, MPI_UNSIGNED, MPI_COMM_WORLD
+    );
 }
 
 //==============================================================================
 //  Comparison
 //==============================================================================
+// This is required for the binary search routine
 template<typename Type>
-static bool operator<=(const TransferDescriptor<Type> & desc, const Type & val)
+static bool operator<=(const TransferDescriptor<Type> & desc, const uint val)
 {
     return desc.data->rank <= val;
 }
 
+// This is required for the binary search routine
 template<typename Type>
-static bool operator>(const TransferDescriptor<Type> & desc, const Type & val)
+static bool operator>(const TransferDescriptor<Type> & desc, const uint val)
 {
     return desc.data->rank > val;
+}
+
+//==============================================================================
+//  Insert element in ascending order sorted array
+//==============================================================================
+// [unsafe]
+template<typename Type>
+static void Insert(
+    const Array< TransferDescriptor<Type> > & descs,
+    const uint pos,
+    const uint rank
+)
+{
+    // Create a new descriptor at the end of the array
+    descs.Append();
+
+    if (pos)
+    {
+        for (int i = descs.Get_size() - 1; i > pos; --i)
+        {
+            descs[i] = descs[i - 1];
+        }
+    }
+
+    descs[pos].Set(rank);
 }
 
 //==============================================================================
@@ -102,15 +134,8 @@ static bool operator>(const TransferDescriptor<Type> & desc, const Type & val)
 template<Dim dim, Order ord, typename Type>
 void Domain::Identify_transfer_descriptors()
 {
-    // Allocate
-    /// FIXME /// Probably too big to be true :)
-    transfer_descriptors.Reallocate(range);
-
-    uint neighbour_count = 0;
     uint trial_rank;
     uint trial_pos;
-
-    /// ??? /// uint index;
 
     // For each patch in the domain
     for (int p = 0; p < patches.Get_size(); ++p)
@@ -123,31 +148,30 @@ void Domain::Identify_transfer_descriptors()
             // If marking does not correspond to patch itself
             if (m != markings.Get_index())
             {
-                // Identify MPI rank associated with the marking
+                // Identify trial MPI rank associated with the marking
                 trial_rank = Binary_search(domain_bounds, markings.index);
 
-                // Identify the position of the rank in neighbour ranks array
+                // Identify the correct position in transfer descriptor array
                 trial_pos = Binary_search(transfer_descriptors, trial_rank);
 
-                // Try to add the trial rank to array of neighbour ranks
+                // If the trial rank descriptor is not found the array 
                 if (
-                    !neighbour_count
-                    || trial_rank != transfer_descriptors[trial_pos]->rank; 
+                    !transfer_descriptors.Get_size()
+                    || trial_rank != transfer_descriptors[trial_pos].Get_rank()
                 )
                 {
-                    transfer_descriptors[neighbour_count].Set(
-                    transfer_descriptors.Insert(
-                        trial_rank, trial_pos, neighbour_count
-                    );
-
-                    ++neighbour_count;
+                    // Insert a new descriptor at the given position with rank
+                    Insert(transfer_descriptors, trial_pos, trial_rank);
                 }
+
+                transfer_descriptors[trial_pos].data->buffer_markings.Append();
+                transfer_descriptor.[trial_pos].data->buffer_markings[
             }
         }
     }
 
     // Shrink to fit
-    transfer_descriptors.Reallocate(neighbour_count);
+    transfer_descriptors.Truncate();
 }
 
 //==============================================================================
@@ -196,10 +220,20 @@ Domain::~Domain()
 //==============================================================================
 //  Get patches index range
 //==============================================================================
-uint Get_patch_min_index(uint ind = rank) const { return domain_bounds[ind]; }
-uint Get_patch_max_index(uint ind = rank) const { return domain_bounds[ind + 1]; }
+uint Get_patch_min_index(const uint ind) const { return domain_bounds[ind]; }
 
-uint Get_patch_count(const uint = rank) const { return Get_patch_max_index(rank) - Get_patch_min_index(rank); }
+uint Get_patch_max_index(const uint ind) const
+{
+    return domain_bounds[ind + 1];
+}
+
+//==============================================================================
+//  Get patch count
+//==============================================================================
+uint Get_patch_count(const uint ind) const
+{
+    return Get_patch_max_index(ind) - Get_patch_min_index(ind);
+}
 
 } // namespace maxwell
 
