@@ -28,11 +28,13 @@ struct GhostMarking
 //  Patch
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements patch (aka hyperrectangular part) of a grid in the simulation box
+// Implements a patch (aka hyperrectangular part) of the grid corresponding
+// to the simulation box
 // -----------------------------------------------------------------------------  
-// Template parameter: dim -- dimensionality of the grid
-// Template parameter: ord -- order of patch numeration
-// Template parameter: Type -- supported arithmetic type
+// Template parameters:
+//     dim -- dimensionality of the grid
+//     ord -- order of patch numeration
+//     Type -- supported arithmetic type
 ////////////////////////////////////////////////////////////////////////////////
 template<Dim dim, Order ord, typename Type = double>
 class Patch
@@ -98,16 +100,17 @@ class Patch
         //======================================================================
         //  Access / mutate methods
         //======================================================================
-        // Get index of the patch
+        // Gets index of the patch
         inline uint Get_index() const { return ghost_markings.Get_size() >> 1; }
 
-        // Get ghost markings
+        // Gets ghost markings
         const Array<GhostMarking> & Get_ghost_markings() const;
 
         // Set / get element
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
 
+        // Set / get ghost array
         void Set_ghost(const uint, const Type *);
         void Get_ghost(const uint, Type *) const;
 };

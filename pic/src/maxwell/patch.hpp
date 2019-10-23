@@ -28,7 +28,7 @@ static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
 }
 
 //============================================================================//
-//  Indices base 3
+//  Multiindex
 //============================================================================//
 // 
 template<Dim dim, uint base>
@@ -46,7 +46,7 @@ static void Multiindex(const uint ind, Tuple<dim> & multiind)
 }
 
 //============================================================================//
-//  Initialize markings
+//  Initialize_markings
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
 void Patch::Initialize_markings(const uint index)
@@ -128,12 +128,28 @@ Patch::Patch(
 }
 
 //============================================================================//
-//  Get ghost markings
+//  Get_ghost_markings
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
 const Array<GhostMarking> & Patch::Get_ghost_markings() const
 {
     return ghost_markings;
+}
+
+//============================================================================//
+//  Set_ghost
+//============================================================================//
+void Patch::Set_ghost(const uint ind, const Type * buf)
+{
+    /// TODO /// Cuda copy from device to device
+}
+
+//============================================================================//
+//  Get_ghost
+//============================================================================//
+void Patch::Get_ghost(const uint ind, Type * buf) const
+{
+    /// TODO /// Cuda copy from device to device
 }
 
 } // namespace maxwell

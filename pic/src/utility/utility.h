@@ -52,7 +52,7 @@ uint Power(const uint, const uint);
 //  Sub_hypercube_count
 //==============================================================================
 /// FIXME /// probably switch to c++11 constexpr function
-// Counts sub-hypercubes of given dimension in cube 
+// Counts sub-hypercubes of given dimension in cube
 //==============================================================================
 uint Sub_hypercube_count(const uint, const uint);
 
@@ -61,7 +61,7 @@ uint Sub_hypercube_count(const uint, const uint);
 //==============================================================================
 /// FIXME /// probably switch to c++11 constexpr function
 // Counts total amount of sub-hypercubes in cube
-//==============================================================================
+// -----------------------------------------------------------------------------
 uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -74,13 +74,13 @@ uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 //==============================================================================
 // Identifies the left bound of interval (including left, excluding right),
 // which contains a given value
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 // Returns uint(-1) if array is empty
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 // Input parameters:
 //     arr -- the array of interval bounds
 //     val -- a reference value
-//==============================================================================
+// -----------------------------------------------------------------------------
 template<typename Type>
 uint Binary_search(const Array<Type> & arr, const Type & val);
 
@@ -89,11 +89,11 @@ uint Binary_search(const Array<Type> & arr, const Type & val);
 //  Tuple
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Contains tuple of given type 
-// -----------------------------------------------------------------------------  
+// Contains tuple of given type
+// -----------------------------------------------------------------------------
 // works correctly for Copy-constructible types
 // allowing conversion from 0 and 1
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 // Template parameters:
 //     size -- number of components
 //     Type -- supported arithmetic type
@@ -105,7 +105,7 @@ struct Tuple
     //  Friend functions
     //==========================================================================
     // Perform binary vector operations with two tuples
-    // one of which may be constructed from a single given component 
+    // one of which may be constructed from a single given component
     friend Tuple operator-(Tuple, const Type &);
     friend Tuple operator-(Tuple, const Tuple &);
 
@@ -119,7 +119,6 @@ struct Tuple
     //==========================================================================
     //  Data
     //==========================================================================
-    // Data array
     Type data[size];
 
     //==========================================================================
@@ -131,27 +130,30 @@ struct Tuple
     void Set(const Tuple & tup) { Copy(size, tup.data, 1, data, 1); }
     void Set(const Tuple &, Type (* const)(const Type &));
 
-    Tuple(const Type & val) { Set(val); }  
+    Tuple(const Type & val) { Set(val); }
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
     Tuple(const Tuple &, Type (* const)(const Type &));
 
+    //==========================================================================
+    //  Assignment methods
+    //==========================================================================
     Tuple & operator=(const Tuple & tup) { Set(tup); return *this; }
+
+    // Compound assign with another tuple
+    // or a tuple, constructed from a single given component
+    Tuple & operator-=(const Type &);
+    Tuple & operator-=(const Tuple &);
+
+    Tuple & operator+=(const Type &);
+    Tuple & operator+=(const Tuple &);
 
     //==========================================================================
     //  Access / mutate methods
     //==========================================================================
-    // Convert to raw non-const / const pointer
-    inline operator Type * const() { return data; } 
-    inline operator const Type * const() const { return data; } 
-
-    // Compound assign with another tuple
-    // or a tuple, constructed from a single given component 
-    Tuple & operator-=(const Type &);
-    Tuple & operator-=(const Tuple &);
-    
-    Tuple & operator+=(const Type &);
-    Tuple & operator+=(const Tuple &);
+    // Returns a pointer to data
+    inline operator Type * const() { return data; }
+    inline operator const Type * const() const { return data; }
 
     // Gets / sets component
     inline Type & operator[](const uint ind) { return data[ind]; }
@@ -215,18 +217,23 @@ class Array
         // Returns size
         inline uint Get_size() const { return size; }
 
+        // Returns raw pointer to data
+        inline operator Type * const() { return data; }
+        inline operator const Type * const() const { return data; }
+
         // Get / set element
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
 
+        // Get / set the last element
+        inline Type & End() { return data[size - 1]; }
+        inline const Type & End() const { return data[size - 1]; }
+
         // Creates a default element at the end, enlarges the array if needed
         void Append();
 
-        // Copy the given element at the end, enlarges the array if needed
+        // Copies the given element to the end, enlarges the array if needed
         void Append(const Type &);
-
-        // Returns raw pointer to data
-        inline const Type * Export_data() const { return data; }
 };
 
 } // namespace maxwell

@@ -12,18 +12,18 @@ namespace maxwell {
 //  BufferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements buffer marking 
+// Implements buffer marking
 ////////////////////////////////////////////////////////////////////////////////
-/// ??? /// template<Dim dim>
 struct BufferMarking
 {
     uint send_index;
     uint recv_index;
 
-    /// Tuple<dim> sizes;
-
     uint size;
+
     uint offset;
+
+    BufferMarking(const uint, const uint, const uint, const uint);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -31,8 +31,8 @@ struct BufferMarking
 //  TransferDescriptorData
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements process communication descriptor data
-// -----------------------------------------------------------------------------  
+// Contains process communication descriptor data
+// -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- the supported arithmetic type
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +48,9 @@ struct TransferDescriptorData
     // Buffers marking
     Array<BufferMarking> buffer_markings;
 
+    // Size of buffer
+    uint size;
+
     // __device__
     // Incoming buffer
     Type * send_buffer;
@@ -59,7 +62,7 @@ struct TransferDescriptorData
     //==========================================================================
     //  Data management
     //==========================================================================
-    TransferDescriptorData(const uint, const uint);
+    TransferDescriptorData(const uint);
     ~TransferDescriptorData();
 };
 
@@ -69,7 +72,7 @@ struct TransferDescriptorData
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements process communication descriptor
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- the supported arithmetic type
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,15 +84,18 @@ struct TransferDescriptor
     //==========================================================================
     //  Data management
     //==========================================================================
-    void Set(const uint, const uint);
+    void Set_data(const uint);
+
     TransferDescriptor(): data(NULL) {}
-    /// ??? /// TransferDescriptor(const uint, const uint);
+    /// ??? /// TransferDescriptor(const uint);
     ~TransferDescriptor() { delete data; }
 
     //==========================================================================
-    //  Access data fields
+    //  Access / mutate methods
     //==========================================================================
-    inline uint Get_rank() const { return data? data->rank: ~0; } 
+    inline uint Get_rank() const { return data? data->rank: ~0; }
+
+    Array<BufferMarking> & Get_buffer_markings();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,14 +105,14 @@ struct TransferDescriptor
 ////////////////////////////////////////////////////////////////////////////////
 // Implements numerical grid data structure per process corresponding to
 // a single MPI rank
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 // Template parameters:
 //     dim -- the dimensionality of the grid
 //     ord -- the order of patch numeration
 //     Type -- the supported arithmetic type
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 /// !!! /// Implementation should probably be changed to a singleton class
-// -----------------------------------------------------------------------------  
+// -----------------------------------------------------------------------------
 /// !!! /// Type should probably be changed to some data structure, representing
 /// !!! /// fields and particles
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,6 +170,17 @@ class Domain
             /// // Allocates patches
             /// void Allocate_patches();
 
+        // Inserts a new transfer descriptor corresponding to the given MPI rank
+        // at a given position to the descriptor array already sorted
+        // in ascending order
+        void Domain::Add_descriptor(const uint, const uint);
+
+        // Adds a new buffer marking to the transfer descriptor
+        // in the descriptor array at the given position
+        void Domain::Append_buffer_markings(
+            const uint, const uint, const uint, const uint
+        );
+
         // Identifies transfer descriptors
         void Identify_transfer_descriptors();
 
@@ -176,11 +193,9 @@ class Domain
         //======================================================================
         //  Data management
         //======================================================================
-            // Construction
             /// FIXME /// Patch sizes, width etc. should be included here
             Domain(const Tuple<dim> &, const Tuple<dim> &);
 
-        // Deallocate
         ~Domain();
 
         //======================================================================
@@ -196,9 +211,7 @@ class Domain
         // Computes patch count for a given domain
         uint Get_patch_count(const uint = rank) const;
 
-            /// // copy patch to CPU
-            /// void Copy_patch(const uint, const Type *) const;
-
+            /// ??? /// void Copy_patch(const uint, const Type *) const;
 };
 
 } // namespace maxwell

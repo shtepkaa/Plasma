@@ -13,9 +13,10 @@ namespace maxwell {
 TransferDescriptorData::TransferDescriptorData(const uint transfer_rank):
     rank(transfer_rank),
     buffer_markings(),
+    size(0),
     send_buffer(NULL),
     recv_buffer(NULL)
-{} 
+{}
 
 TransferDescriptorData::~TransferDescriptorData()
 {
@@ -28,15 +29,25 @@ TransferDescriptorData::~TransferDescriptorData()
 //  TransferDescriptor
 //
 ////////////////////////////////////////////////////////////////////////////////
-// [unsafe]
-void TransferDescriptor::Set(const uint transfer_rank)
-{
-    data = new TransferDescriptorData(transfer_rank);
-} 
-
 /// ??? /// TransferDescriptor::TransferDescriptor(const uint transfer_rank):
 /// ??? ///     data(new TransferDescriptorData(transfer_rank))
-/// ??? /// {} 
+/// ??? /// {}
+
+//==============================================================================
+//  Data management
+//==============================================================================
+void TransferDescriptor::Set_data(const uint transfer_rank)
+{
+    data = new TransferDescriptorData(transfer_rank);
+}
+
+//==============================================================================
+//  Access / mutate methods
+//==============================================================================
+Array<BufferMarking> & TransferDescriptor::Get_buffer_markings()
+{
+    return data->buffer_markings;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -104,28 +115,43 @@ static bool operator>(const TransferDescriptor<Type> & desc, const uint val)
 }
 
 //==============================================================================
-//  Insert element in ascending order sorted array
+//  Add_descriptor
 //==============================================================================
-// [unsafe]
-template<typename Type>
-static void Insert(
-    const Array< TransferDescriptor<Type> > & descs,
-    const uint pos,
-    const uint rank
-)
+template<Dim dim, Order ord, typename Type>
+void Domain::Add_descriptor(const uint pos, const uint rank)
 {
     // Create a new descriptor at the end of the array
-    descs.Append();
+    transfer_descriptors.Append();
 
     if (pos)
     {
-        for (int i = descs.Get_size() - 1; i > pos; --i)
+        for (int d = transfer_descriptors.Get_size() - 1; d > pos; --d)
         {
-            descs[i] = descs[i - 1];
+            transfer_descriptors[d] = transfer_descriptors[d - 1];
         }
     }
 
-    descs[pos].Set(rank);
+    transfer_descriptors[pos].Set_data(rank);
+}
+
+//==============================================================================
+//  Append_buffer_markings
+//==============================================================================
+template<Dim dim, Order ord, typename Type>
+void Domain::Append_buffer_markings(
+    const uint pos,
+    const uint send_index,
+    const uint recv_index,
+    const uint size
+)
+{
+    Array<BufferMarkings> & markings
+        = transfer_descriptors[pos].Get_buffer_markings();
+
+    uint offset = pos? markings.End().offset: 0;
+
+    markings.Append();
+    markings.End().Set(send_index, recv_index, size, offset + size);
 }
 
 //==============================================================================
@@ -146,7 +172,7 @@ void Domain::Identify_transfer_descriptors()
         for (int m = 0; m < markings.Get_size(); ++m)
         {
             // If marking does not correspond to patch itself
-            if (m != markings.Get_index())
+            if (m != markings[m].index)
             {
                 // Identify trial MPI rank associated with the marking
                 trial_rank = Binary_search(domain_bounds, markings.index);
@@ -154,19 +180,28 @@ void Domain::Identify_transfer_descriptors()
                 // Identify the correct position in transfer descriptor array
                 trial_pos = Binary_search(transfer_descriptors, trial_rank);
 
-                // If the trial rank descriptor is not found the array 
+                // If the trial rank descriptor is not found the array
                 if (
                     !transfer_descriptors.Get_size()
                     || trial_rank != transfer_descriptors[trial_pos].Get_rank()
                 )
                 {
                     // Insert a new descriptor at the given position with rank
-                    Insert(transfer_descriptors, trial_pos, trial_rank);
+                    Add_descriptor(trial_pos, trial_rank);
                 }
 
-                transfer_descriptors[trial_pos].data->buffer_markings.Append();
-                transfer_descriptor.[trial_pos].data->buffer_markings[
+                Append_buffer_markings(
+                    trial_pos, patches[p].Get_index(), markings[m].index,
+                    Product<dim>(markings[m].sizes)
+                );
             }
+        }
+    }
+
+    for (int d = 0; d < transfer_descriptors.Get_size(); ++d)
+    {
+        for (int b = 0; b < transfer_descriptors[s].Get_buffer_markings().Get_size(); ++b)
+        {
         }
     }
 
@@ -186,7 +221,7 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     patch_sizes(patch_sizs),
     patches(),
     local_markings(),
-    transfer_descriptor()
+    transfer_descriptors()
 {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &range);
@@ -211,9 +246,9 @@ Domain::~Domain()
 {
     for (uint p = 0; p < patches.Get_size(); ++p) { delete patches[p]; }
 
-    for (uint t = 0; t < transfer_descriptor.Get_size(); ++t)
+    for (uint t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
-        delete transfer_descriptor[t];
+        delete transfer_descriptors[t];
     }
 }
 
