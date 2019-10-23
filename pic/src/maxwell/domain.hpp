@@ -135,23 +135,34 @@ void Domain::Add_descriptor(const uint pos, const uint rank)
 }
 
 //==============================================================================
-//  Append_buffer_markings
+//  Find_buffer_markings
 //==============================================================================
 template<Dim dim, Order ord, typename Type>
-void Domain::Append_buffer_markings(
-    const uint pos,
-    const uint send_index,
-    const uint recv_index,
-    const uint size
+Array<BufferMarking> & Domain::Find_buffer_markings(
+    const GhostMarking & ghost_marking
 )
 {
-    Array<BufferMarkings> & markings
-        = transfer_descriptors[pos].Get_buffer_markings();
+    // Identify trial MPI rank associated with the marking
+    const uint trial_rank = Binary_search(domain_bounds, ghost_marking.index);
 
-    uint offset = pos? markings.End().offset: 0;
+    if (trial_rank == rank) { return local_buffer_markings; }
+    else
+    {
+        // Identify the correct position in transfer descriptor array
+        const uint pos = Binary_search(transfer_descriptors, trial_rank);
 
-    markings.Append();
-    markings.End().Set(send_index, recv_index, size, offset + size);
+        // If the trial rank descriptor is not found in the array
+        if (
+            !transfer_descriptors.Get_size()
+            || trial_rank != transfer_descriptors[pos].Get_rank()
+        )
+        {
+            // Insert a new descriptor at the given position with the new rank
+            Add_descriptor(pos, trial_rank);
+        }
+
+        return transfer_descriptors[pos].Get_buffer_markings();
+    }
 }
 
 //==============================================================================
@@ -160,39 +171,36 @@ void Domain::Append_buffer_markings(
 template<Dim dim, Order ord, typename Type>
 void Domain::Identify_transfer_descriptors()
 {
-    uint trial_rank;
-    uint trial_pos;
+    const uint ghost_markings_size = patch[0].Get_ghost_markings().Get_size();
 
     // For each patch in the domain
     for (int p = 0; p < patches.Get_size(); ++p)
     {
-        const Array<GhostMarkings> & markings = patches[p].Get_ghost_markings();
+        const uint send_index = patches[p].Get_index();
 
         // Examine each ghost marking
-        for (int m = 0; m < markings.Get_size(); ++m)
+        for (int g = 0; g < ghost_markings_size; ++g)
         {
+            const GhostMarking & ghost_marking
+                = patches[p].Get_ghost_markings()[g];
+
+            const uint recv_index = ghost_marking.index;
+
             // If marking does not correspond to patch itself
-            if (m != markings[m].index)
+            if (g != recv_index)
             {
-                // Identify trial MPI rank associated with the marking
-                trial_rank = Binary_search(domain_bounds, markings.index);
+                Array<BufferMarking> & buffer_markings
+                    = Find_buffer_markings(ghost_marking);
 
-                // Identify the correct position in transfer descriptor array
-                trial_pos = Binary_search(transfer_descriptors, trial_rank);
+                const uint size = Product<dim>(ghost_marking.sizes);
 
-                // If the trial rank descriptor is not found the array
-                if (
-                    !transfer_descriptors.Get_size()
-                    || trial_rank != transfer_descriptors[trial_pos].Get_rank()
-                )
-                {
-                    // Insert a new descriptor at the given position with rank
-                    Add_descriptor(trial_pos, trial_rank);
-                }
+                const uint offset
+                    = buffer_markings.Get_size()?
+                        buffer_markings.End().offset:
+                        0;
 
-                Append_buffer_markings(
-                    trial_pos, patches[p].Get_index(), markings[m].index,
-                    Product<dim>(markings[m].sizes)
+                buffer_markings.Append(
+                    BufferMarking(send_index, recv_index, size, offset + size)
                 );
             }
         }
@@ -200,8 +208,16 @@ void Domain::Identify_transfer_descriptors()
 
     for (int d = 0; d < transfer_descriptors.Get_size(); ++d)
     {
-        for (int b = 0; b < transfer_descriptors[s].Get_buffer_markings().Get_size(); ++b)
+        for (
+            int b = 0;
+            b < transfer_descriptors[d].Get_buffer_markings().Get_size();
+            ++b
+        )
         {
+            const BufferMarking & buffer_marking
+                = transfer_descriptors[d].Get_buffer_markings()[b];
+
+            patches[buffer_marking.recv_index - Get_patch_min_index()].Get_ghost();
         }
     }
 

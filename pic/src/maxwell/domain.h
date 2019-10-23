@@ -23,6 +23,7 @@ struct BufferMarking
 
     uint offset;
 
+    BufferMarking(): send_index(~0), recv_index(~0), size(0), offset(0) {}
     BufferMarking(const uint, const uint, const uint, const uint);
 };
 
@@ -151,7 +152,7 @@ class Domain
         //  Intra-domain communication descriptors
         //======================================================================
         // Local buffer marking
-        Array<GhostMarking> local_markings;
+        Array<BufferMarking> local_buffer_markings;
 
         //======================================================================
         //  Inter-domain communication descriptors
@@ -177,9 +178,7 @@ class Domain
 
         // Adds a new buffer marking to the transfer descriptor
         // in the descriptor array at the given position
-        void Domain::Append_buffer_markings(
-            const uint, const uint, const uint, const uint
-        );
+        Array<BufferMarking> & Find_buffer_markings(const GhostMarking &);
 
         // Identifies transfer descriptors
         void Identify_transfer_descriptors();
