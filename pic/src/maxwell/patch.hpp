@@ -9,12 +9,28 @@
 
 namespace maxwell {
 
+////////////////////////////////////////////////////////////////////////////////
+//
+//  GhostMarking
+//
+////////////////////////////////////////////////////////////////////////////////
+GhostMarking::GhostMarking():
+    patch_index(~0), send_offset(0), recv_offset(0), sizes(), directions()
+{}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Patch
+//
+////////////////////////////////////////////////////////////////////////////////
 //============================================================================//
-//  Index
+//  Compute_patch_index
 //============================================================================//
 // Computes index of the patch corresponding to a chosen order
 template<Dim dim, Order ord>
-static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
+static uint Compute_patch_index(
+    const Tuple<dim> & sizes, const Tuple<dim> & coords
+)
 {
     /// FIXME ///
     if (ord == Cartesian) { return Cartesian_index<dim>(sizes, coords); }
@@ -28,28 +44,10 @@ static uint Index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
 }
 
 //============================================================================//
-//  Multiindex
-//============================================================================//
-// 
-template<Dim dim, uint base>
-static void Multiindex(const uint ind, Tuple<dim> & multiind)
-{
-    uint tmp = ind;
-
-    for (int d = 0; d < dim - 1; ++d)
-    {
-        multiind[d] = tmp % base;
-        tmp /= base;
-    }
-
-    multiind[dim - 1] = tmp;
-}
-
-//============================================================================//
-//  Initialize_markings
+//  Initialize_ghost_markings
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
-void Patch::Initialize_markings(const uint index)
+void Patch::Initialize_ghost_markings(const uint index)
 {
     // Extended size products
     uint prods[dim] = { 1 };
@@ -73,32 +71,32 @@ void Patch::Initialize_markings(const uint index)
         recv_offsets[d][2] = send_offsets[d][0] + send_offsets[d][2];
     }
 
-    Tuple<dim> indices;
-
     // For all ghosts
 #pragma omp parallel for
-    for (int s = 0; s < ghost_markings.Get_size(); ++s)
+    for (uint8_t g = 0; g < ghost_markings.Get_size(); ++g)
     {
-        // Calculate indices which are in { 0, 1, 2 }
-        Multiindex<dim, 3>(s, indices);
+        GhostMarking & marking = ghost_markings[g];
+        Tuple<dim, Dir> & directions = marking.directions;
 
-        // Identify index
-        ghost_markings[s].index
-            = (s == Get_index())?
+        // Convert ghost index to multiindex of directions
+        directions = Identify_ghost_directions<dim>(g);
+
+        // Identify patch index
+        marking.patch_index
+            = (g == Get_index())?
                 index:
-                Index<dim, ord>(layer_sizes, (layer_coordinates + indices - 1));
+                Compute_patch_index<dim, ord>(
+                    layer_sizes, (coordinates + directions - 1)
+                );
 
-        ghost_markings[s].send_offset = 0;
-        ghost_markings[s].recv_offset = 0;
-
-        // Identify sizes, send and receive offsets
+        // Identify sizes, sending and receiving offsets
         for (int d = 0; d < dim; ++d)
         {
-            ghost_markings[s].sizes[d]
-                = (indices[d] - 1)? ghost_width: sizes[indices[d]];
+            marking.send_offset += send_offsets[d][directions[d]];
+            marking.recv_offset += recv_offsets[d][directions[d]];
 
-            ghost_markings[s].send_offset += send_offsets[d][indices[d]];
-            ghost_markings[s].recv_offset += recv_offsets[d][indices[d]];
+            marking.sizes[d]
+                = (directions[d] - 1)? ghost_width: sizes[directions[d]];
         }
     }
 }
@@ -108,15 +106,15 @@ void Patch::Initialize_markings(const uint index)
 //============================================================================//
 template<Dim dim, Order ord, typename Type>
 Patch::Patch(
-    const Tuple<dim> & layer_sizs,
-    const Tuple<dim> & layer_coords,
-    const Tuple<dim> & sizs,
+    const Tuple<dim> & relative_layer_sizes,
+    const Tuple<dim> & coords,
+    const Tuple<dim> & patch_sizes,
     const uint width,
     const uint index
 ):
-    layer_sizes(layer_sizs),
-    layer_coordinates(layer_coords),
-    sizes(sizs),
+    layer_sizes(relative_layer_sizes),
+    coordinates(coords),
+    sizes(patch_sizes),
     ghost_width(width),
     extended_sizes(sizes + 2 * width),
     ghost_markings(Power(3, dim)),
@@ -147,7 +145,7 @@ void Patch::Set_ghost(const uint ind, const Type * buf)
 //============================================================================//
 //  Get_ghost
 //============================================================================//
-void Patch::Get_ghost(const uint ind, Type * buf) const
+void Patch::Copy_ghost(const uint ind, Type * buf) const
 {
     /// TODO /// Cuda copy from device to device
 }

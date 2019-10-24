@@ -48,21 +48,21 @@ uint Binary_logarithm(const uint);
 //==============================================================================
 uint Power(const uint, const uint);
 
-//==============================================================================
-//  Sub_hypercube_count
-//==============================================================================
-/// FIXME /// probably switch to c++11 constexpr function
-// Counts sub-hypercubes of given dimension in cube
-//==============================================================================
-uint Sub_hypercube_count(const uint, const uint);
-
-//==============================================================================
-//  Total_hypercube_count
-//==============================================================================
-/// FIXME /// probably switch to c++11 constexpr function
-// Counts total amount of sub-hypercubes in cube
-// -----------------------------------------------------------------------------
-uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
+/// ??? /// //==============================================================================
+/// ??? /// //  Sub_hypercube_count
+/// ??? /// //==============================================================================
+/// ??? /// /// FIXME /// probably switch to c++11 constexpr function
+/// ??? /// // Counts sub-hypercubes of given dimension in cube
+/// ??? /// //==============================================================================
+/// ??? /// uint Sub_hypercube_count(const uint, const uint);
+/// ??? /// 
+/// ??? /// //==============================================================================
+/// ??? /// //  Total_hypercube_count
+/// ??? /// //==============================================================================
+/// ??? /// /// FIXME /// probably switch to c++11 constexpr function
+/// ??? /// // Counts total amount of sub-hypercubes in cube
+/// ??? /// // -----------------------------------------------------------------------------
+/// ??? /// uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -70,19 +70,23 @@ uint Total_hypercube_count(const uint dim) { return Power(3, dim); }
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Binary search
+//  Find_index
 //==============================================================================
-// Identifies the left bound of interval (including left, excluding right),
-// which contains a given value
+// Identifies the index corresponding to the left bound of an interval
+// (including left, excluding right), which contains a given value
 // -----------------------------------------------------------------------------
 // Returns uint(-1) if array is empty
+// -----------------------------------------------------------------------------
+// Template parameters:
+//     ElementType -- type of the array elements
+//     ValueType -- type of the reference value
 // -----------------------------------------------------------------------------
 // Input parameters:
 //     arr -- the array of interval bounds
 //     val -- a reference value
 // -----------------------------------------------------------------------------
-template<typename Type>
-uint Binary_search(const Array<Type> & arr, const Type & val);
+template<typename ElementType, typename ValueType>
+uint Find_index(const Array<ElementType> & arr, const ValueType & val);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -112,8 +116,9 @@ struct Tuple
     friend Tuple operator+(Tuple, const Type &);
     friend Tuple operator+(Tuple, const Tuple &);
 
-    // Reduce the tuple by given operation
     /// useful /// friend Type Sum(const Tuple &, const uint = size);
+
+    // Computes the product of the first entries of a tuple
     friend Type Product(const Tuple &, const uint = size);
 
     //==========================================================================
@@ -133,6 +138,8 @@ struct Tuple
     Tuple(const Type & val) { Set(val); }
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
+
+    // Constructs a new Tuple with the entries of the original Tuple undergone the mutator function
     Tuple(const Tuple &, Type (* const)(const Type &));
 
     //==========================================================================
@@ -235,6 +242,29 @@ class Array
         // Copies the given element to the end, enlarges the array if needed
         void Append(const Type &);
 };
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Tuple
+//
+////////////////////////////////////////////////////////////////////////////////
+//============================================================================//
+//  Identify_ghost_index
+//============================================================================//
+template<Dim dim>
+uint8_t Identify_ghost_index(const Tuple<dim, Dir> & directions);
+
+//============================================================================//
+//  Identify_ghost_directions
+//============================================================================//
+template<Dim dim>
+Tuple<dim, Dir> & Identify_ghost_directions(const uint8_t ind);
+
+//============================================================================//
+//  Flip_ghost_directions
+//============================================================================//
+template<Dim dim>
+Tuple<dim, Dir> & Flip_ghost_directions(Tuple<dim, Dir> & directions);
 
 } // namespace maxwell
 

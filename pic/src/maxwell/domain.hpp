@@ -142,23 +142,24 @@ Array<BufferMarking> & Domain::Find_buffer_markings(
     const GhostMarking & ghost_marking
 )
 {
-    // Identify trial MPI rank associated with the marking
-    const uint trial_rank = Binary_search(domain_bounds, ghost_marking.index);
+    // Identify transfer MPI rank associated with the ghost marking
+    const uint transfer_rank
+        = domain_bounds[Find_index(domain_bounds, ghost_marking.patch_index)];
 
-    if (trial_rank == rank) { return local_buffer_markings; }
+    if (transfer_rank == rank) { return local_buffer_markings; }
     else
     {
         // Identify the correct position in transfer descriptor array
-        const uint pos = Binary_search(transfer_descriptors, trial_rank);
+        const uint pos = Find_index(transfer_descriptors, transfer_rank);
 
-        // If the trial rank descriptor is not found in the array
+        // If the transfer rank descriptor is not found in the array
         if (
             !transfer_descriptors.Get_size()
-            || trial_rank != transfer_descriptors[pos].Get_rank()
+            || transfer_rank != transfer_descriptors[pos].Get_rank()
         )
         {
             // Insert a new descriptor at the given position with the new rank
-            Add_descriptor(pos, trial_rank);
+            Add_descriptor(pos, transfer_rank);
         }
 
         return transfer_descriptors[pos].Get_buffer_markings();
@@ -184,7 +185,7 @@ void Domain::Identify_transfer_descriptors()
             const GhostMarking & ghost_marking
                 = patches[p].Get_ghost_markings()[g];
 
-            const uint recv_index = ghost_marking.index;
+            const uint recv_index = ghost_marking.patch_index;
 
             // If marking does not correspond to patch itself
             if (g != recv_index)
@@ -200,7 +201,8 @@ void Domain::Identify_transfer_descriptors()
                         0;
 
                 buffer_markings.Append(
-                    BufferMarking(send_index, recv_index, size, offset + size)
+                    BufferMarking(send_index, recv_index, size, offset + size, , )
+                    /// TO BE CONTINUED
                 );
             }
         }

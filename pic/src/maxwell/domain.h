@@ -12,19 +12,33 @@ namespace maxwell {
 //  BufferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements buffer marking
+// Contains buffer marking data corresponding to a single ghost transfer
 ////////////////////////////////////////////////////////////////////////////////
 struct BufferMarking
 {
-    uint send_index;
-    uint recv_index;
-
+    // Transfer data size
     uint size;
 
+    // Transfer data offset in buffer
     uint offset;
 
-    BufferMarking(): send_index(~0), recv_index(~0), size(0), offset(0) {}
-    BufferMarking(const uint, const uint, const uint, const uint);
+    uint send_patch_index;
+    uint recv_patch_index;
+
+    // Indices of corresponding ghosts in a patch
+    uint8_t send_ghost_index;
+    uint8_t recv_ghost_index;
+
+    BufferMarking();
+
+    BufferMarking(
+        const uint,
+        const uint,
+        const uint,
+        const uint,
+        const uint8_t,
+        const uint8_t
+    );
 };
 
 ////////////////////////////////////////////////////////////////////////////////

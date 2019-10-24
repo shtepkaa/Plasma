@@ -12,15 +12,26 @@ namespace maxwell {
 //
 ////////////////////////////////////////////////////////////////////////////////
 // Implements patch marking
-template<Dim dim>
+////////////////////////////////////////////////////////////////////////////////
+template<Dim dim, typename Type>
 struct GhostMarking
 {
-    uint index;
+    // Receiving patch index
+    uint patch_index;
 
+    // Receiving ghost offset
+    uint send_offset;
+
+    // Sending ghost offset
+    uint recv_offset;
+
+    // Ghost sizes along all axes
     Tuple<dim> sizes;
 
-    uint send_offset;
-    uint recv_offset;
+    // Sending ghost directions along all axes in { Left, Center, Right }
+    Tuple<dim, Dir> directions; 
+
+    GhostMarking();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,7 +47,7 @@ struct GhostMarking
 //     ord -- order of patch numeration
 //     Type -- supported arithmetic type
 ////////////////////////////////////////////////////////////////////////////////
-template<Dim dim, Order ord, typename Type = double>
+template<Dim dim, Order ord, typename Type>
 class Patch
 {
     private:
@@ -44,19 +55,19 @@ class Patch
         //======================================================================
         //  Geometry descriptors
         //======================================================================
-        // Layer sizes of the grid in patches
+        // The layer sizes of the grid (in patches)
         Tuple<dim> layer_sizes;
 
-        // Layer coordinates of the patch in a layer 
-        Tuple<dim> layer_coordinates;
+        // Patch coordinates in the layer 
+        Tuple<dim> coordinates;
 
-        // Sizes
+        // Patch sizes (excluding surrounding ghosts sizes)
         Tuple<dim> sizes;
 
         // Ghost width
         uint ghost_width;
 
-        // Extended sizes including surrounding ghosts
+        // Extended sizes (including surrounding ghosts sizes)
         Tuple<dim> extended_sizes;
 
         // Ghost markings in lexicographic order
@@ -65,19 +76,18 @@ class Patch
         //======================================================================
         //  Data
         //======================================================================
-        // Data size including surrounding ghosts,
+        // Data size (including surrounding ghosts sizes),
         // which is the product of extended sizes
         uint data_size;
 
         // __device__
-        // Patch data including surrounding ghosts
+        // Patch data (including surrounding ghosts)
         Type * data;
 
         //======================================================================
         //  Initialization methods
         //======================================================================
-        // Initializes ghost markings
-        void Initialize_markings(const uint);
+        void Initialize_ghost_markings(const uint);
 
         // Default
         /// FIXME /// Either remove or switch to c++11: = delete
