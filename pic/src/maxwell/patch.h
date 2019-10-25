@@ -25,11 +25,11 @@ struct GhostMarking
     // Sending ghost offset
     uint recv_offset;
 
-    // Ghost sizes along all axes
+    // Ghost sizes
     Tuple<dim> sizes;
 
-    // Sending ghost directions along all axes in { Left, Center, Right }
-    Tuple<dim, Dir> directions; 
+    // Receiving ghost index
+    uint8_t recv_ghost_index;
 
     GhostMarking();
 };
@@ -70,8 +70,11 @@ class Patch
         // Extended sizes (including surrounding ghosts sizes)
         Tuple<dim> extended_sizes;
 
-        // Ghost markings in lexicographic order
+        // Ghost markings in lexicographic order (including the patch itself)
         Array<GhostMarking> ghost_markings;
+
+        // Patch marking index of the patch in the ghost markings array
+        uint8_t marking_index;
 
         //======================================================================
         //  Data
@@ -110,19 +113,22 @@ class Patch
         //======================================================================
         //  Access / mutate methods
         //======================================================================
+        /// ??? /// // Gets patch marking index in ghost markings array
+        /// ??? /// inline uint Get_marking_index() const { return marking_index; }
+
         // Gets index of the patch
-        inline uint Get_index() const { return ghost_markings.Get_size() >> 1; }
+        uint Get_index() const;
 
         // Gets ghost markings
         const Array<GhostMarking> & Get_ghost_markings() const;
 
-        // Set / get element
+        // Sets / gets element
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
 
-        // Set / get ghost array
+        // Sets / copies ghost data
         void Set_ghost(const uint, const Type *);
-        void Get_ghost(const uint, Type *) const;
+        void Copy_ghost(const uint, Type *) const;
 };
 
 } // namespace maxwell

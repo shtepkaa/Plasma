@@ -13,18 +13,27 @@ namespace maxwell {
 //==============================================================================
 //  Copy
 //==============================================================================
-// Implements BLAS-like array copy,
+// Implements generic BLAS-like array copy procedure
+// -----------------------------------------------------------------------------
 // works correctly for copy-constructible types
+// -----------------------------------------------------------------------------
+// Template parameter:
+//     Type -- supported arithmetic type
+// -----------------------------------------------------------------------------
 template<typename Type>
 void Copy(const uint, const Type *, const uint, Type *, const uint);
 
 //==============================================================================
 //  Axpy
 //==============================================================================
-// Implements BLAS-like Axpy,
+// Implements generic BLAS-like axpy procedure
+// -----------------------------------------------------------------------------
 // works correctly for copy-constructible types,
 // allowing compound assignment and multiplication operators
-//==============================================================================
+// -----------------------------------------------------------------------------
+// Template parameter:
+//     Type -- supported arithmetic type
+// -----------------------------------------------------------------------------
 template<typename Type>
 void Axpy(
     const uint, const Type &, const Type *, const uint, Type *, const uint
@@ -38,14 +47,15 @@ void Axpy(
 //==============================================================================
 //  Binary_logarithm
 //==============================================================================
-// Calculates exponent for a given integer power of two
+// Calculates an exponent for a given integer power of two
+// -----------------------------------------------------------------------------
 uint Binary_logarithm(const uint);
 
 //==============================================================================
 //  Power
 //==============================================================================
-// Calculates integer power for integer base
-//==============================================================================
+// Calculates an integer power of an integer base
+// -----------------------------------------------------------------------------
 uint Power(const uint, const uint);
 
 /// ??? /// //==============================================================================
@@ -139,7 +149,8 @@ struct Tuple
     Tuple(const Type * dat = NULL) { Set(dat); }
     Tuple(const Tuple & tup) { Set(tup); }
 
-    // Constructs a new Tuple with the entries of the original Tuple undergone the mutator function
+    // Constructs a new tuple with the entries of the original tuple undergone
+    // the mutator function
     Tuple(const Tuple &, Type (* const)(const Type &));
 
     //==========================================================================
@@ -261,10 +272,10 @@ template<Dim dim>
 Tuple<dim, Dir> & Identify_ghost_directions(const uint8_t ind);
 
 //============================================================================//
-//  Flip_ghost_directions
+//  Reflect_ghost_directions
 //============================================================================//
 template<Dim dim>
-Tuple<dim, Dir> & Flip_ghost_directions(Tuple<dim, Dir> & directions);
+Tuple<dim, Dir> & Reflect_ghost_directions(Tuple<dim, Dir> & directions);
 
 } // namespace maxwell
 

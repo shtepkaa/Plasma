@@ -57,10 +57,10 @@ struct TransferDescriptorData
     //==========================================================================
     //  Data
     //==========================================================================
-    // Communication rank
+    // Communication MPI rank
     uint rank;
 
-    // Buffers marking
+    // Buffer markings
     Array<BufferMarking> buffer_markings;
 
     // Size of buffer
@@ -90,10 +90,9 @@ struct TransferDescriptorData
 // -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- the supported arithmetic type
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////// 
 template<typename Type>
-struct TransferDescriptor
-{
+struct TransferDescriptor {
     TransferDescriptorData<Type> * data;
 
     //==========================================================================
@@ -163,10 +162,9 @@ class Domain
             /// !!! /// In result it should be: Array< Patch<dim, ord, Type> > patches;
 
         //======================================================================
-        //  Intra-domain communication descriptors
+        //  Intra-domain communication markings
         //======================================================================
-        // Local buffer marking
-        Array<BufferMarking> local_buffer_markings;
+        Array<BufferMarking> local_markings;
 
         //======================================================================
         //  Inter-domain communication descriptors
@@ -179,20 +177,22 @@ class Domain
         // Sets initial domain bounds
         void Initialize_domain_bounds();
 
-        // Identifies domain bounds
+        // Collects the domain bounds from all the processes
         void Identify_domain_bounds();
 
-            /// // Allocates patches
-            /// void Allocate_patches();
+            /// ??? /// // Allocates patches
+            /// ??? /// void Allocate_patches();
 
         // Inserts a new transfer descriptor corresponding to the given MPI rank
         // at a given position to the descriptor array already sorted
         // in ascending order
-        void Domain::Add_descriptor(const uint, const uint);
+        void Domain::Add_transfer_descriptor(const uint, const uint);
 
-        // Adds a new buffer marking to the transfer descriptor
-        // in the descriptor array at the given position
-        Array<BufferMarking> & Find_buffer_markings(const GhostMarking &);
+        // Finds the transfer descriptor in the descriptor array corrseponding
+        // to a given ghost marking
+        TransferDescriptorData<Type> * Find_transfer_descriptor(
+            const GhostMarking &
+        );
 
         // Identifies transfer descriptors
         void Identify_transfer_descriptors();

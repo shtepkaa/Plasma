@@ -15,7 +15,11 @@ namespace maxwell {
 //
 ////////////////////////////////////////////////////////////////////////////////
 GhostMarking::GhostMarking():
-    patch_index(~0), send_offset(0), recv_offset(0), sizes(), directions()
+    patch_index(~0),
+    send_offset(0),
+    recv_offset(0),
+    sizes(),
+    recv_ghost_index(~0)
 {}
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,10 +80,9 @@ void Patch::Initialize_ghost_markings(const uint index)
     for (uint8_t g = 0; g < ghost_markings.Get_size(); ++g)
     {
         GhostMarking & marking = ghost_markings[g];
-        Tuple<dim, Dir> & directions = marking.directions;
 
-        // Convert ghost index to multiindex of directions
-        directions = Identify_ghost_directions<dim>(g);
+        // Compute ghost index from multiindex of directions
+        Tuple<dim, Dir> & directions = Identify_ghost_directions<dim>(g);
 
         // Identify patch index
         marking.patch_index
@@ -98,6 +101,10 @@ void Patch::Initialize_ghost_markings(const uint index)
             marking.sizes[d]
                 = (directions[d] - 1)? ghost_width: sizes[directions[d]];
         }
+
+        // Identify receiving ghost index
+        marking.recv_ghost_index
+            = Identify_ghost_index(Reflect_ghost_directions(directions));
     }
 }
 
@@ -118,12 +125,18 @@ Patch::Patch(
     ghost_width(width),
     extended_sizes(sizes + 2 * width),
     ghost_markings(Power(3, dim)),
+    marking_index(ghost_markings().Get_size() >> 1),
     data_size(Product<dim>(extended_sizes)),
     data(NULL)
 {
     Initialize_markings(index);
     CUDA_CALL(cudaMalloc(&data, data_size * sizeof(Type)));
 }
+
+//============================================================================//
+// Get_index
+//============================================================================//
+uint Get_index() const { return ghost_markings[marking_index].patch_index; }
 
 //============================================================================//
 //  Get_ghost_markings

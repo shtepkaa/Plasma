@@ -344,10 +344,10 @@ Tuple<dim, Dir> & Identify_ghost_directions(const uint8_t ind)
 }
 
 //============================================================================//
-//  Flip_ghost_directions
+//  Reflect_ghost_directions
 //============================================================================//
 template<Dim dim>
-Tuple<dim, Dir> & Flip_ghost_directions(Tuple<dim, Dir> & directions)
+Tuple<dim, Dir> & Reflect_ghost_directions(Tuple<dim, Dir> & directions)
 {
     for (int d = 0; d < dim; ++d)
     {
