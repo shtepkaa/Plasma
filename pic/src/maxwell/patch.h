@@ -11,13 +11,13 @@ namespace maxwell {
 //  GhostMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements patch marking
+// Contains ghost marking data
 ////////////////////////////////////////////////////////////////////////////////
 template<Dim dim, typename Type>
 struct GhostMarking
 {
-    // Receiving patch index
-    uint patch_index;
+    // Ghost sizes
+    Tuple<dim> sizes;
 
     // Receiving ghost offset
     uint send_offset;
@@ -25,11 +25,11 @@ struct GhostMarking
     // Sending ghost offset
     uint recv_offset;
 
-    // Ghost sizes
-    Tuple<dim> sizes;
+    // Index of a patch to communicate with
+    uint target_patch_index;
 
-    // Receiving ghost index
-    uint8_t recv_ghost_index;
+    // Index of a ghost in the patch to communicate with
+    uint8_t target_ghost_index;
 
     GhostMarking();
 };

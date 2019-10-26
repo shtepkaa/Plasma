@@ -48,10 +48,10 @@ static void Transform_inverse(const uint, const uint, uint &, const uint);
 //============================================================================//
 static uint Hilbert_index_orientation(const uint, const uint *, uint &, uint &);
 
-template<Dim dim>
+template<Dim>
 static uint Hilbert_index(const uint, const uint *, const uint, const uint);
 
-template<Dim dim>
+template<Dim>
 static void Hilbert_index_inverse(
     const uint, uint *, const uint, const uint, const uint
 );
@@ -63,10 +63,10 @@ static uint General_Hilbert_index_orientation(
     const uint *, const uint *, uint &, uint &
 );
 
-template<Dim dim>
+template<Dim>
 uint General_Hilbert_index(const uint *, const uint *);
 
-template<Dim dim>
+template<Dim>
 void General_Hilbert_index_inverse(const uint *, uint *, const uint);
 
 } // namespace maxwell

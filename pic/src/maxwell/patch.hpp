@@ -15,11 +15,11 @@ namespace maxwell {
 //
 ////////////////////////////////////////////////////////////////////////////////
 GhostMarking::GhostMarking():
-    patch_index(~0),
+    sizes(),
     send_offset(0),
     recv_offset(0),
-    sizes(),
-    recv_ghost_index(~0)
+    target_patch_index(~0),
+    target_ghost_index(~0)
 {}
 
 ////////////////////////////////////////////////////////////////////////////////

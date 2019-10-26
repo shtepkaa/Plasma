@@ -5,14 +5,17 @@ namespace maxwell {
 
 typedef unsigned int uint;
 
+// Utility constants
+enum Util: uint { UNDEFINED = ~0 };
+
 // Dimensionality
-enum Dim: uint { OneDim = 1, TwoDim, ThreeDim };
+enum Dim: uint { ONE_DIM = 1, TWO_DIM, THREE_DIM };
 
 // Patch order
-enum Order: uint { Cartesian = 0, Hilbertian };
+enum Order: uint { CARTESIAN = 0, HILBERTIAN };
 
 // Direction
-enum Dir: uint8_t { Left = 0, Center, Right };
+enum Dir: uint8_t { LEFT = 0, CENTER, RIGHT };
 
 
 } // namespace maxwell

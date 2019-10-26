@@ -22,12 +22,12 @@ struct BufferMarking
     // Transfer data offset in buffer
     uint offset;
 
-    uint send_patch_index;
-    uint recv_patch_index;
+    uint local_patch_index;
+    uint extern_patch_index;
 
     // Indices of corresponding ghosts in a patch
-    uint8_t send_ghost_index;
-    uint8_t recv_ghost_index;
+    uint8_t local_ghost_index;
+    uint8_t extern_ghost_index;
 
     BufferMarking();
 
@@ -57,7 +57,7 @@ struct TransferDescriptorData
     //==========================================================================
     //  Data
     //==========================================================================
-    // Communication MPI rank
+    // Extern MPI rank to communicate with
     uint rank;
 
     // Buffer markings
@@ -101,13 +101,15 @@ struct TransferDescriptor {
     void Set_data(const uint);
 
     TransferDescriptor(): data(NULL) {}
-    /// ??? /// TransferDescriptor(const uint);
     ~TransferDescriptor() { delete data; }
 
     //==========================================================================
     //  Access / mutate methods
     //==========================================================================
     inline uint Get_rank() const { return data? data->rank: ~0; }
+
+    inline uint Get_size() const { return data->size; }
+    inline void Update_size(const uint count) { data->size += count; }
 
     Array<BufferMarking> & Get_buffer_markings();
 };
@@ -186,12 +188,15 @@ class Domain
         // Inserts a new transfer descriptor corresponding to the given MPI rank
         // at a given position to the descriptor array already sorted
         // in ascending order
-        void Domain::Add_transfer_descriptor(const uint, const uint);
+        void Create_transfer_descriptor(const uint, const uint);
 
-        // Finds the transfer descriptor in the descriptor array corrseponding
-        // to a given ghost marking
-        TransferDescriptorData<Type> * Find_transfer_descriptor(
-            const GhostMarking &
+        // Returns a transfer descriptor corresponding to a target MPI rank
+        TransferDescriptor<Type> & Get_transfer_descriptor(const uint);
+
+        // Creates the buffer marking in the correct transfer descriptor array
+        // corrseponding to a given sender date and a ghost marking
+        void Create_buffer_marking(
+            const uint, const uint8_t, const GhostMarking &
         );
 
         // Identifies transfer descriptors

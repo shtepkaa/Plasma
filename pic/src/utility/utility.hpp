@@ -60,7 +60,7 @@ template<typename ElementType, typename ValueType>
 uint Find_index(const Array<ElementType> & arr, const ValueType & val)
 {
     // Zero size specialization
-    if (!arr.Get_size()) { return -1; }
+    if (!arr.Get_size()) { return ~0; }
 
     uint end = arr.Get_size() - 1;
 
