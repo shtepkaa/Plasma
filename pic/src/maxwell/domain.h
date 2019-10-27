@@ -92,7 +92,8 @@ struct TransferDescriptorData
 //     Type -- the supported arithmetic type
 //////////////////////////////////////////////////////////////////////////////// 
 template<typename Type>
-struct TransferDescriptor {
+struct TransferDescriptor
+{
     TransferDescriptorData<Type> * data;
 
     //==========================================================================
@@ -112,6 +113,11 @@ struct TransferDescriptor {
     inline void Update_size(const uint count) { data->size += count; }
 
     Array<BufferMarking> & Get_buffer_markings();
+
+    // Returns a raw pointer to the buffer location corresponding to a record
+    // with a given index
+    Type * Get_send_buffer_location(const uint = 0);
+    Type * Get_recv_buffer_location(const uint = 0);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -132,7 +138,7 @@ struct TransferDescriptor {
 /// !!! /// Type should probably be changed to some data structure, representing
 /// !!! /// fields and particles
 ////////////////////////////////////////////////////////////////////////////////
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 class Domain
 {
     private:
@@ -155,13 +161,11 @@ class Domain
         // Patch sizes
         Tuple<dim> patch_sizes;
 
-            //======================================================================
-            //  Grid data in patches
-            //======================================================================
-            // Patches arranged in specified Order
-            /// FIXME /// Create Patch reference struct and use insted of raw ptrs
-            Array< Patch<dim, ord, Type> * > patches;
-            /// !!! /// In result it should be: Array< Patch<dim, ord, Type> > patches;
+        //======================================================================
+        //  Grid data in patches
+        //======================================================================
+        // Patches arranged in specified Order
+        Array< Patch<dim, ord, Type> > patches;
 
         //======================================================================
         //  Intra-domain communication markings
@@ -199,6 +203,9 @@ class Domain
             const uint, const uint8_t, const GhostMarking &
         );
 
+        // Allocates inter-domain transfer buffers on device 
+        void Allocate_transfer_buffers();
+
         // Identifies transfer descriptors
         void Identify_transfer_descriptors();
 
@@ -214,7 +221,7 @@ class Domain
             /// FIXME /// Patch sizes, width etc. should be included here
             Domain(const Tuple<dim> &, const Tuple<dim> &);
 
-        ~Domain();
+        ~Domain() {}
 
         //======================================================================
         //  Access / mutate methods

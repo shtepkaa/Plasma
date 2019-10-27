@@ -53,7 +53,7 @@ template<typename Type>
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Find_index
+//  Find index
 //==============================================================================
 // Implements a binary search procedure
 template<typename ElementType, typename ValueType>
@@ -164,7 +164,7 @@ Type Product(const Tuple<size, Type> & tup, const uint count)
 }
 
 //==============================================================================
-//  Initialization
+//  Set
 //==============================================================================
 template<uint size, typename Type>
 void Tuple::Set(const Type * dat)
@@ -217,7 +217,7 @@ Tuple & Tuple::operator+=(const Tuple & tup)
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Data management
+//  Reallocate
 //==============================================================================
 template<typename Type>
 void Array::Reallocate(const uint cap)
@@ -244,7 +244,7 @@ void Array::Reallocate(const uint cap)
 }
 
 //==============================================================================
-//  Initialization
+//  Set
 //==============================================================================
 template<typename Type>
 void Array::Set(const uint cap, const Type & val)
@@ -303,59 +303,6 @@ void Array::Append(const Type & val)
 
     data[size] = val;
     ++size;
-}
-
-//============================================================================//
-//  Identify_ghost_index
-//============================================================================//
-template<Dim dim>
-uint8_t Identify_ghost_index(const Tuple<dim, Dir> & directions)
-{
-    uint8_t res = directions[0];
-
-    for (int d = 1; d < dim; ++d)
-    {
-        res *= 3;
-        res += directions[d];
-    }
-
-    return res;
-}
-
-//============================================================================//
-//  Identify_ghost_directions
-//============================================================================//
-template<Dim dim>
-Tuple<dim, Dir> & Identify_ghost_directions(const uint8_t ind)
-{
-    Tuple<dim, Dir> res;
-
-    uint8_t tmp = ind;
-
-    for (int d = 0; d < dim - 1; ++d)
-    {
-        res[d] = tmp % 3;
-        tmp /= 3;
-    }
-
-    res[dim - 1] = tmp;
-
-    return res;
-}
-
-//============================================================================//
-//  Reflect_ghost_directions
-//============================================================================//
-template<Dim dim>
-Tuple<dim, Dir> & Reflect_ghost_directions(Tuple<dim, Dir> & directions)
-{
-    for (int d = 0; d < dim; ++d)
-    {
-        if (directions[d] == LEFT) { directions[d] = RIGHT; }
-        else if (directions[d] == RIGHT) { directions[d] = LEFT; }
-    }
-
-    return directions;
 }
 
 } // namespace maxwell

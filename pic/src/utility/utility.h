@@ -173,7 +173,7 @@ struct Tuple
     inline operator Type * const() { return data; }
     inline operator const Type * const() const { return data; }
 
-    // Gets / sets component
+    // Gets / sets a component
     inline Type & operator[](const uint ind) { return data[ind]; }
     inline const Type & operator[](const uint ind) const { return data[ind]; }
 };
@@ -216,7 +216,6 @@ class Array
         void Set(const uint, const Type * = NULL);
         void Set(const Array &);
 
-        // Construct the array
         Array(): capacity(0), size(0), data(NULL) {}
         Array(const uint, const Type &);
         Array(const uint, const Type * = NULL);
@@ -229,21 +228,18 @@ class Array
         //======================================================================
         //  Access / mutate methods
         //======================================================================
-        // Returns capacity
         inline uint Get_capacity() const { return capacity; }
-
-        // Returns size
         inline uint Get_size() const { return size; }
 
-        // Returns raw pointer to data
+        // Returns a raw pointer to the data
         inline operator Type * const() { return data; }
         inline operator const Type * const() const { return data; }
 
-        // Get / set element
+        // Gets / sets an element
         inline Type & operator[](const uint ind) { return data[ind]; }
         inline const Type & operator[](const uint i) const { return data[i]; }
 
-        // Get / set the last element
+        // Gets / sets the last element
         inline Type & End() { return data[size - 1]; }
         inline const Type & End() const { return data[size - 1]; }
 
@@ -253,29 +249,6 @@ class Array
         // Copies the given element to the end, enlarges the array if needed
         void Append(const Type &);
 };
-
-////////////////////////////////////////////////////////////////////////////////
-//
-//  Tuple
-//
-////////////////////////////////////////////////////////////////////////////////
-//============================================================================//
-//  Identify_ghost_index
-//============================================================================//
-template<Dim dim>
-uint8_t Identify_ghost_index(const Tuple<dim, Dir> & directions);
-
-//============================================================================//
-//  Identify_ghost_directions
-//============================================================================//
-template<Dim dim>
-Tuple<dim, Dir> & Identify_ghost_directions(const uint8_t ind);
-
-//============================================================================//
-//  Reflect_ghost_directions
-//============================================================================//
-template<Dim dim>
-Tuple<dim, Dir> & Reflect_ghost_directions(Tuple<dim, Dir> & directions);
 
 } // namespace maxwell
 

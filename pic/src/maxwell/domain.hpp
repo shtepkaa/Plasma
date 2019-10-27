@@ -20,8 +20,8 @@ TransferDescriptorData::TransferDescriptorData(const uint target_rank):
 
 TransferDescriptorData::~TransferDescriptorData()
 {
-    CUDA_CALL(cudaFree(recv_buffer));
-    CUDA_CALL(cudaFree(send_buffer));
+    if (recv_buffer) { CUDA_CALL(cudaFree(recv_buffer)); }
+    if (send_buffer) { CUDA_CALL(cudaFree(send_buffer)); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ TransferDescriptorData::~TransferDescriptorData()
 /// ??? /// {}
 
 //==============================================================================
-//  Set_data
+//  Set data
 //==============================================================================
 void TransferDescriptor::Set_data(const uint target_rank)
 {
@@ -42,11 +42,24 @@ void TransferDescriptor::Set_data(const uint target_rank)
 }
 
 //==============================================================================
-//  Get_buffer_markings
+//  Get buffer markings
 //==============================================================================
 Array<BufferMarking> & TransferDescriptor::Get_buffer_markings()
 {
     return data->buffer_markings;
+}
+
+//==============================================================================
+//  Get buffer location
+//==============================================================================
+Type * TransferDescriptor::Get_send_buffer_location(const uint ind)
+{
+    return data->send_buffer + data->buffer_markings[ind].offset;
+}
+
+Type * TransferDescriptor::Get_recv_buffer_location(const uint ind)
+{
+    return data->recv_buffer + data->buffer_markings[ind].offset;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,10 +68,10 @@ Array<BufferMarking> & TransferDescriptor::Get_buffer_markings()
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Initialize_domain_bounds
+//  Initialize domain bounds
 //==============================================================================
 /// FIXME ///
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Domain::Initialize_domain_bounds()
 {
     domain_bounds.Reallocate(range + 1);
@@ -85,9 +98,9 @@ void Domain::Initialize_domain_bounds()
 }
 
 //==============================================================================
-//  Identify_domain_bounds
+//  Identify domain bounds
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Domain::Identify_domain_bounds()
 {
     MPI_Allgather(
@@ -114,9 +127,9 @@ static bool operator>(const TransferDescriptor<Type> & desc, const uint val)
 }
 
 //==============================================================================
-//  Create_transfer_descriptor
+//  Create transfer descriptor
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Domain::Create_transfer_descriptor(const uint ind, const uint rank)
 {
     // Create a new descriptor at the end of the array
@@ -132,11 +145,11 @@ void Domain::Create_transfer_descriptor(const uint ind, const uint rank)
 }
 
 //==============================================================================
-//  Get_transfer_descriptor
+//  Get transfer descriptor
 //==============================================================================
 // Finds the corresponding descriptor in array by rank comparisons, creates
 // a new descriptor if there is no an appropriate one
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 TransferDescriptor<Type> & Domain::Get_transfer_descriptor(
     const uint target_rank
 )
@@ -161,9 +174,9 @@ TransferDescriptor<Type> & Domain::Get_transfer_descriptor(
 }
 
 //==============================================================================
-//  Create_buffer_marking
+//  Create buffer marking
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Domain::Create_buffer_marking(
     const uint local_patch_index,
     const uint8_t local_ghost_index,
@@ -214,25 +227,35 @@ void Domain::Create_buffer_marking(
 }
 
 //==============================================================================
-//  Allocate_transfer_buffers 
+//  Allocate transfer buffers 
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Allocate_transfer_buffers()
 {
     for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
-        /// TODO /// CudaMalloc here
+        CUDA_CALL(
+            cudaMalloc(
+                &transfer_descriptors[t].Get_send_buffer_location(),
+                transfer_descriptors[t].Get_size() * sizeof(Type)
+            )
+        );
+
+        CUDA_CALL(
+            cudaMalloc(
+                &transfer_descriptors[t].Get_recv_buffer_location(),
+                transfer_descriptors[t].Get_size() * sizeof(Type)
+            )
+        );
     }
 }
 
 //==============================================================================
-//  Identify_transfer_descriptors 
+//  Identify transfer descriptors 
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 void Domain::Identify_transfer_descriptors()
 {
-    const uint ghost_markings_size = patch[0].Get_ghost_markings().Get_size();
-
     // For each patch in the domain
     for (int p = 0; p < patches.Get_size(); ++p)
     {
@@ -242,7 +265,7 @@ void Domain::Identify_transfer_descriptors()
             = patches[p].Get_ghost_markings();
 
         // For each ghost marking
-        for (int g = 0; g < ghost_markings_size; ++g)
+        for (int g = 0; g < ghost_markings.Get_size(); ++g)
         {
             Create_buffer_marking(local_patch_index, g, ghost_markings[g]);
         }
@@ -251,33 +274,47 @@ void Domain::Identify_transfer_descriptors()
     // Allocate buffers here
     Allocate_transfer_buffers();
 
-    /// FIXME /// Also consider local transfers here, like extern ones below
-
-    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
-    {
-        for (
-            int b = 0;
-            b < transfer_descriptors[t].Get_buffer_markings().Get_size();
-            ++b
-        )
-        {
-            const BufferMarking & buffer_marking
-                = transfer_descriptors[t].Get_buffer_markings()[b];
-
-            patches[
-                buffer_marking.local_patch_index - Get_patch_min_index()
-            ].Copy_ghost(buffer_marking.local_ghost_index, );
-        }
-    }
-
     // Shrink to fit
     transfer_descriptors.Truncate();
 }
 
 //==============================================================================
+//  >>>
+//==============================================================================
+template<Dimension dim, Order ord, typename Type>
+void Domain::Perform_local_transfers()
+{
+    /// FIXME /// Also consider local transfers here, like extern ones below
+}
+
+//==============================================================================
+//  >>>
+//==============================================================================
+template<Dimension dim, Order ord, typename Type>
+void Domain::Gather_transfer_buffer()
+{
+    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
+    {
+        const TransferDescriptor<Type> & desc = transfer_descriptors[t];
+        const BufferMarking & buffer_markings = desc.Get_buffer_markings();
+
+        for (int b = 0; b < buffer_markings.Get_size(); ++b)
+        {
+            const uint ind
+                = buffer_markings[b].local_patch_index - Get_patch_min_index();
+
+            patches[ind].Copy_ghost(
+                buffer_markings[b].local_ghost_index,
+                desc.Get_send_buffer_location(b)
+            );
+        }
+    }
+}
+
+//==============================================================================
 //  Constructor
 //==============================================================================
-template<Dim dim, Order ord, typename Type>
+template<Dimension dim, Order ord, typename Type>
 Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
     rank(0),
     range(0),
@@ -304,15 +341,6 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
 }
 
 //==============================================================================
-//  Deallocation
-//==============================================================================
-template<Dim dim, Order ord, typename Type>
-Domain::~Domain()
-{
-    /// ??? /// for (uint p = 0; p < patches.Get_size(); ++p) { delete patches[p]; }
-}
-
-//==============================================================================
 //  Get patches index range
 //==============================================================================
 // [unsafe]
@@ -325,7 +353,7 @@ uint Get_patch_max_index(const uint ind) const
 }
 
 //==============================================================================
-//  Get_patch_count
+//  Get patch count
 //==============================================================================
 // [unsafe]
 uint Get_patch_count(const uint ind) const
