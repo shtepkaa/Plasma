@@ -64,15 +64,15 @@ struct TransferDescriptorData
     Array<BufferMarking> buffer_markings;
 
     // Size of buffer
-    uint size;
+    uint buffer_size;
 
     // __device__
-    // Incoming buffer
-    Type * send_buffer;
+    // Buffers combined location, direct pointer to the sending buffer
+    Type * sending_buffer;
 
     // __device__
-    // Outcoming buffer
-    Type * recv_buffer;
+    // Direct pointer to the receiving buffer
+    Type * receiving_buffer;
 
     //==========================================================================
     //  Data management
@@ -86,38 +86,57 @@ struct TransferDescriptorData
 //  TransferDescriptor
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Implements process communication descriptor
+// Implements a process communication descriptor
 // -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- the supported arithmetic type
 //////////////////////////////////////////////////////////////////////////////// 
 template<typename Type>
-struct TransferDescriptor
+class TransferDescriptor
 {
-    TransferDescriptorData<Type> * data;
-
     //==========================================================================
-    //  Data management
+    //  Friends functions
     //==========================================================================
-    void Set_data(const uint);
+    friend bool operator<=(const TransferDescriptor &, const uint);
+    friend bool operator>(const TransferDescriptor &, const uint);
 
-    TransferDescriptor(): data(NULL) {}
-    ~TransferDescriptor() { delete data; }
+    private:
 
-    //==========================================================================
-    //  Access / mutate methods
-    //==========================================================================
-    inline uint Get_rank() const { return data? data->rank: ~0; }
+        TransferDescriptorData<Type> * data;
 
-    inline uint Get_size() const { return data->size; }
-    inline void Update_size(const uint count) { data->size += count; }
+    public:
 
-    Array<BufferMarking> & Get_buffer_markings();
+        //======================================================================
+        //  Data management
+        //======================================================================
+        void Set_data(const uint);
+        void Allocate_buffers();
 
-    // Returns a raw pointer to the buffer location corresponding to a record
-    // with a given index
-    Type * Get_send_buffer_location(const uint = 0);
-    Type * Get_recv_buffer_location(const uint = 0);
+        void Add_buffer_marking(const BufferMarking &);
+
+        TransferDescriptor(): data(NULL) {}
+        ~TransferDescriptor() { delete data; }
+
+        //======================================================================
+        //  Access / mutate methods
+        //======================================================================
+        inline uint Get_rank() const { return data? data->rank: ~0; }
+
+        inline uint Get_buffer_size() const { return data->buffer_size; }
+        void Update_buffer_size(const uint);
+
+        const Array<BufferMarking> & Get_buffer_markings() const;
+
+        // Returns a raw pointer to the buffer location corresponding
+        // to the record with a given index
+        Type * Sending_buffer_record(const uint = 0);
+        Type * Receiving_buffer_record(const uint = 0);
+
+        //======================================================================
+        //  Communication methods
+        //======================================================================
+        void Send() const;
+        void Receive();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -184,11 +203,16 @@ class Domain
         void Initialize_domain_bounds();
 
         // Collects the domain bounds from all the processes
-        void Identify_domain_bounds();
+        void Set_domain_bounds();
 
-            /// ??? /// // Allocates patches
-            /// ??? /// void Allocate_patches();
+        //======================================================================
+        //  Intra-domain communication methods
+        //======================================================================
+        void Perform_local_transfers()
 
+        //======================================================================
+        //  Inter-domain communication methods
+        //======================================================================
         // Inserts a new transfer descriptor corresponding to the given MPI rank
         // at a given position to the descriptor array already sorted
         // in ascending order
@@ -206,20 +230,24 @@ class Domain
         // Allocates inter-domain transfer buffers on device 
         void Allocate_transfer_buffers();
 
-        // Identifies transfer descriptors
-        void Identify_transfer_descriptors();
+        void Set_transfer_descriptors();
 
-            // Default
-            /// FIXME /// Either remove or switch to c++11: = delete
-            Domain() {}
+        // Prepare a transfer package to send
+        void Pack_transfer_data();
+
+        // Unpack a received transfer package
+        void Unpack_transfer_data();
+
+        /// FIXME /// Either remove or switch to c++11: = delete
+        Domain() {}
 
     public:
 
         //======================================================================
         //  Data management
         //======================================================================
-            /// FIXME /// Patch sizes, width etc. should be included here
-            Domain(const Tuple<dim> &, const Tuple<dim> &);
+        /// FIXME /// Patch sizes, width etc. should probably be included here
+        Domain(const Tuple<dim> &, const Tuple<dim> &);
 
         ~Domain() {}
 
@@ -235,8 +263,6 @@ class Domain
 
         // Computes patch count for a given domain
         uint Get_patch_count(const uint = rank) const;
-
-            /// ??? /// void Copy_patch(const uint, const Type *) const;
 };
 
 } // namespace maxwell

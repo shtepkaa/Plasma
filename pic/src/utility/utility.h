@@ -15,7 +15,7 @@ namespace maxwell {
 //==============================================================================
 // Implements generic BLAS-like array copy procedure
 // -----------------------------------------------------------------------------
-// works correctly for copy-constructible types
+// Works correctly for copy-constructible types
 // -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- supported arithmetic type
@@ -28,8 +28,8 @@ void Copy(const uint, const Type *, const uint, Type *, const uint);
 //==============================================================================
 // Implements generic BLAS-like axpy procedure
 // -----------------------------------------------------------------------------
-// works correctly for copy-constructible types,
-// allowing compound assignment and multiplication operators
+// Works correctly for copy-constructible types, allowing usage
+// of the compound assignment and multiplication operators
 // -----------------------------------------------------------------------------
 // Template parameter:
 //     Type -- supported arithmetic type
@@ -80,7 +80,7 @@ uint Power(const uint, const uint);
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Find_index
+//  Find index
 //==============================================================================
 // Identifies the index corresponding to the left bound of an interval
 // (including left, excluding right), which contains a given value
@@ -96,17 +96,16 @@ uint Power(const uint, const uint);
 //     val -- a reference value
 // -----------------------------------------------------------------------------
 template<typename ElementType, typename ValueType>
-uint Find_index(const Array<ElementType> & arr, const ValueType & val);
+uint Find_index(const Array<ElementType> &, const ValueType &);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  Tuple
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Contains tuple of given type
+// Contains a tuple of a given type
 // -----------------------------------------------------------------------------
-// works correctly for Copy-constructible types
-// allowing conversion from 0 and 1
+// Works correctly for Copy-constructible types allowing conversion from 0 and 1
 // -----------------------------------------------------------------------------
 // Template parameters:
 //     size -- number of components

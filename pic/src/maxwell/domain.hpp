@@ -10,18 +10,19 @@ namespace maxwell {
 //  TransferDescriptorData
 //
 ////////////////////////////////////////////////////////////////////////////////
+template<typename Type>
 TransferDescriptorData::TransferDescriptorData(const uint target_rank):
     rank(target_rank),
     buffer_markings(),
     size(0),
-    send_buffer(NULL),
-    recv_buffer(NULL)
+    sending_buffer(NULL),
+    receiving_buffer(NULL)
 {}
 
+template<typename Type>
 TransferDescriptorData::~TransferDescriptorData()
 {
-    if (recv_buffer) { CUDA_CALL(cudaFree(recv_buffer)); }
-    if (send_buffer) { CUDA_CALL(cudaFree(send_buffer)); }
+    if (sending_buffer) { CUDA_CALL(cudaFree(sending_buffer)); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,37 +30,90 @@ TransferDescriptorData::~TransferDescriptorData()
 //  TransferDescriptor
 //
 ////////////////////////////////////////////////////////////////////////////////
-/// ??? /// TransferDescriptor::TransferDescriptor(const uint target_rank):
-/// ??? ///     data(new TransferDescriptorData(target_rank))
-/// ??? /// {}
-
 //==============================================================================
 //  Set data
 //==============================================================================
+template<typename Type>
 void TransferDescriptor::Set_data(const uint target_rank)
 {
     data = new TransferDescriptorData(target_rank);
 }
 
 //==============================================================================
+//  Allocate buffers
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Allocate_buffers()
+{
+    CUDA_CALL(cudaMalloc(sending_buffer, 2 * buffer_size * sizeof(Type)));
+
+    receiving_buffer = sending_buffer + buffer_size;
+}
+
+//==============================================================================
+//  Add buffer marking
+//==============================================================================
+void Add_buffer_marking(const BufferMarking & marking)
+{
+    buffer_markings.Append(marking);
+}
+
+//==============================================================================
 //  Get buffer markings
 //==============================================================================
-Array<BufferMarking> & TransferDescriptor::Get_buffer_markings()
+template<typename Type>
+const Array<BufferMarking> & TransferDescriptor::Get_buffer_markings() const
 {
     return data->buffer_markings;
 }
 
 //==============================================================================
-//  Get buffer location
+//  Update buffer size
 //==============================================================================
-Type * TransferDescriptor::Get_send_buffer_location(const uint ind)
+template<typename Type>
+void TransferDescriptor::Update_buffer_size(const uint marking_size)
 {
-    return data->send_buffer + data->buffer_markings[ind].offset;
+    data->buffer_size += marking_size;
 }
 
-Type * TransferDescriptor::Get_recv_buffer_location(const uint ind)
+//==============================================================================
+//  Access buffer records
+//==============================================================================
+template<typename Type>
+Type * TransferDescriptor::Sending_buffer_record(const uint ind)
 {
-    return data->recv_buffer + data->buffer_markings[ind].offset;
+    return data->sending_buffer + data->buffer_markings[ind].offset;
+}
+
+template<typename Type>
+Type * TransferDescriptor::Receiving_buffer_record(const uint ind)
+{
+    return data->receiving_buffer + data->buffer_markings[ind].offset;
+}
+
+//==============================================================================
+//  Send
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Send() const
+{
+    /// MPI_Isend(
+    ///     (void *)(domain_bounds + rank), 1, MPI_UNSIGNED, (void *)domain_bounds,
+    ///     1, MPI_UNSIGNED, MPI_COMM_WORLD
+    /// );
+
+    MPI_Request request;
+
+    int MPI_Isend(
+        (void *)data->rankbuffer,
+        data->rankize,
+            MPI_Datatype, /// Create MPI datatype
+                          /// for sending structure somewhere else
+        data->rank,
+            int tag, /// Create tag /// ??? send + recv + iteration_number
+        MPI_COMM_WORLD,
+        request
+    );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -86,22 +140,22 @@ void Domain::Initialize_domain_bounds()
         uint total_patch_count
             = Product<dim>(grid_sizes) / Product<dim>(patch_sizes);
 
-        uint patch_per_domain = total_patch_count / range;
+        uint patches_per_domain = total_patch_count / range;
         uint rem = total_patch_count % range;
 
         for (uint r = 1; r <= range; ++r)
         {
             domain_bounds[r]
-                = domain_bounds[r - 1] + patch_per_domain + (r < rem);
+                = domain_bounds[r - 1] + patches_per_domain + (r < rem);
         }
     }
 }
 
 //==============================================================================
-//  Identify domain bounds
+//  Set domain bounds
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Domain::Identify_domain_bounds()
+void Domain::Set_domain_bounds()
 {
     MPI_Allgather(
         (void *)(domain_bounds + rank), 1, MPI_UNSIGNED, (void *)domain_bounds,
@@ -206,22 +260,22 @@ void Domain::Create_buffer_marking(
                 )
             );
         }
-        // Otherwise, the transfer is an interprocess one
+        // Otherwise, the transfer is an inter-domain one
         else
         {
             TransferDescriptor<Type> & desc
                 = Get_transfer_descriptor(target_rank);
 
             // Construct a new marking at the end of corresponding array
-            desc.Get_buffer_markings().Append(
+            desc.Add_buffer_marking(
                 BufferMarking(
-                    size, desc.Get_size(), local_patch_index,
+                    size, desc.Get_buffer_size(), local_patch_index,
                     extern_patch_index, local_ghost_index, extern_ghost_index
                 )
             );
 
             // Enlarge the size of the buffer by the one of the ghost
-            desc.Update_size(size);
+            desc.Update_buffer_size(size);
         }
     }
 }
@@ -230,34 +284,22 @@ void Domain::Create_buffer_marking(
 //  Allocate transfer buffers 
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Allocate_transfer_buffers()
+void Domain::Allocate_transfer_buffers()
 {
-    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
+    for (uint t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
-        CUDA_CALL(
-            cudaMalloc(
-                &transfer_descriptors[t].Get_send_buffer_location(),
-                transfer_descriptors[t].Get_size() * sizeof(Type)
-            )
-        );
-
-        CUDA_CALL(
-            cudaMalloc(
-                &transfer_descriptors[t].Get_recv_buffer_location(),
-                transfer_descriptors[t].Get_size() * sizeof(Type)
-            )
-        );
+        transfer_descriptors[t].Allocate_buffers();
     }
 }
 
 //==============================================================================
-//  Identify transfer descriptors 
+//  Set transfer descriptors 
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Domain::Identify_transfer_descriptors()
+void Domain::Set_transfer_descriptors()
 {
     // For each patch in the domain
-    for (int p = 0; p < patches.Get_size(); ++p)
+    for (uint p = 0; p < patches.Get_size(); ++p)
     {
         const uint local_patch_index = patches[p].Get_index();
 
@@ -265,7 +307,7 @@ void Domain::Identify_transfer_descriptors()
             = patches[p].Get_ghost_markings();
 
         // For each ghost marking
-        for (int g = 0; g < ghost_markings.Get_size(); ++g)
+        for (uint g = 0; g < ghost_markings.Get_size(); ++g)
         {
             Create_buffer_marking(local_patch_index, g, ghost_markings[g]);
         }
@@ -279,40 +321,88 @@ void Domain::Identify_transfer_descriptors()
 }
 
 //==============================================================================
-//  >>>
+//  Perform local transfers
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
 void Domain::Perform_local_transfers()
 {
-    /// FIXME /// Also consider local transfers here, like extern ones below
+    for (uint ; ; )
+    {
+        /// FIXME /// Also consider local transfers here, like extern ones below
+    }
 }
 
 //==============================================================================
-//  >>>
+//  Pack transfer data
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Domain::Gather_transfer_buffer()
+void Domain::Pack_transfer_data()
 {
+    // For each transfer descriptor
     for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
         const TransferDescriptor<Type> & desc = transfer_descriptors[t];
-        const BufferMarking & buffer_markings = desc.Get_buffer_markings();
+        const BufferMarking & markings = desc.Get_buffer_markings();
 
-        for (int b = 0; b < buffer_markings.Get_size(); ++b)
+        // For each buffer marking
+        for (int b = 0; b < markings.Get_size(); ++b)
         {
             const uint ind
-                = buffer_markings[b].local_patch_index - Get_patch_min_index();
+                = markings[b].local_patch_index - Get_patch_min_index();
 
+            // Copy the associated ghost to the correct sending buffer record
             patches[ind].Copy_ghost(
-                buffer_markings[b].local_ghost_index,
-                desc.Get_send_buffer_location(b)
+                markings[b].local_ghost_index, desc.Sending_buffer_record(b)
             );
         }
     }
 }
 
 //==============================================================================
-//  Constructor
+//  Unpack transfer data
+//==============================================================================
+template<Dimension dim, Order ord, typename Type>
+void Domain::Unpack_transfer_data()
+{
+    // For each transfer descriptor
+    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
+    {
+        const TransferDescriptor<Type> & desc = transfer_descriptors[t];
+        const BufferMarking & markings = desc.Get_buffer_markings();
+
+        // For each buffer marking
+        for (int b = 0; b < markings.Get_size(); ++b)
+        {
+            const uint ind
+                = markings[b].local_patch_index - Get_patch_min_index();
+
+            // Copy the associated receiving buffer record to the correct ghost
+            patches[ind].Set_ghost(
+                markings[b].local_ghost_index, desc.Receiving_buffer_record(b)
+            );
+        }
+    }
+}
+
+//==============================================================================
+//  Perform global transfers
+//==============================================================================
+template<Dimension dim, Order ord, typename Type>
+void Domain::Perform_global_transfers()
+{
+    Pack_transfer_data();
+
+    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
+    {
+        transfer_descriptors[t].Send();
+        transfer_descriptors[t].Receive();
+    }
+
+    Unpack_transfer_data();
+}
+
+//==============================================================================
+//  Data management
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
 Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
@@ -335,8 +425,7 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
 
     if (range)
     {
-        /// ??? /// Identify_neighbour_ranks();
-        Identify_transfar_descriptors();
+        Set_transfer_descriptors();
     }
 }
 
