@@ -3,7 +3,7 @@
 
 #include "types.h"
 #include "utility.h"
-#include "hilbert.h"
+#include "hilbert_index.h"
 
 #include <omp.h>
 

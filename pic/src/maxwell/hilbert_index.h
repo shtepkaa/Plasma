@@ -1,5 +1,5 @@
-#ifndef HILBERT_H
-#define HILBERT_H
+#ifndef HILBERT_INDEX_H
+#define HILBERT_INDEX_H
 
 namespace maxwell {
 
@@ -71,4 +71,4 @@ void Inverse_general_Hilbert_index(const uint *, uint *, const uint);
 
 } // namespace maxwell
 
-#endif // HILBERT_H
+#endif // HILBERT_INDEX_H

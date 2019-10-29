@@ -104,7 +104,7 @@ void TransferDescriptor::Pack_transfer_data(const Array<Patch> & patches)
     {
         const uint ind = buffer_markings[b].local_patch_index - min_ind;
 
-        // Copy the associated ghost to the correct sending buffer record
+        // Copy the ghost to the sending buffer record
         patches[ind].Copy_ghost(
             buffer_markings[b].local_ghost_index, Sending_buffer_record(b)
         );
@@ -126,7 +126,7 @@ void TransferDescriptor::Unpack_transfer_data(
     {
         const uint ind = buffer_markings[b].local_patch_index - min_ind;
 
-        // Copy the associated receiving buffer record to the correct ghost
+        // Copy from a buffer record to the correct ghost
         patches[ind].Set_ghost(
             buffer_markings[b].local_ghost_index, Receiving_buffer_record(b)
         );
