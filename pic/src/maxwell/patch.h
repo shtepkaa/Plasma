@@ -69,6 +69,8 @@ struct GhostMarking
 //     ord -- order of patch numeration
 //     Type -- supported data type
 ////////////////////////////////////////////////////////////////////////////////
+/// FIXME /// Add a template parameter corresponding to internal patch data
+/// FIXME /// storage order
 template<Dimension dim, typename Type>
 struct PatchData
 {
@@ -156,7 +158,6 @@ class Patch
         );
 
         Patch(): data(NULL) {}
-
         ~Patch() { if (data) { delete data; } }
 
         //======================================================================

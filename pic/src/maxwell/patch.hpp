@@ -22,7 +22,6 @@ GhostMarking::GhostMarking():
     target_ghost_index(~0)
 {}
 
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  Ghost index and directions computation functions
@@ -91,12 +90,12 @@ static Tuple<dim, Direction> & Reflect_ghost_directions(
 template<Dimension dim, typename Type>
 PatchData::PatchData(
     const Tuple<dim> & relative_layer_sizes,
-    const Tuple<dim> & coords,
+    const Tuple<dim> & patch_coordinates,
     const Tuple<dim> & patch_sizes,
     const uint width
 ):
     layer_sizes(relative_layer_sizes),
-    coordinates(coords),
+    coordinates(patch_coordinates),
     sizes(patch_sizes),
     ghost_width(width),
     extended_sizes(sizes + 2 * width),
@@ -119,7 +118,7 @@ PatchData::PatchData(
 template<Dimension dim, Order ord, typename Type>
 void Set_data(
     const Tuple<dim> & relative_layer_sizes,
-    const Tuple<dim> & coords,
+    const Tuple<dim> & patch_coordinates,
     const Tuple<dim> & patch_sizes,
     const uint width,
     const uint index
@@ -128,7 +127,10 @@ void Set_data(
     /// FIXME /// Probably better to change existing data, than delete/allocate
     if (data) { CUDA_CALL(cudaFree(data)); }
 
-    data = new PatchData(relative_layer_sizes, coords, patch_sizes, width);
+    data
+        = new PatchData(
+            relative_layer_sizes, patch_coordinates, patch_sizes, width
+        );
 
     Set_ghost_markings(index);
 }
@@ -136,20 +138,47 @@ void Set_data(
 //==============================================================================
 //  Compute patch index
 //==============================================================================
-// Computes index of the patch corresponding to a chosen order
+// Computes the index of the patch corresponding to a chosen order
 template<Dimension dim, Order ord>
 static uint Compute_patch_index(
     const Tuple<dim> & sizes, const Tuple<dim> & coords
 )
 {
-    /// FIXME ///
-    if (ord == CARTESIAN) { return Cartesian_index<dim>(sizes, coords); }
+    if (ord == CARTESIAN)
+    {
+        /// FIXME ///
+        return Cartesian_index<dim>(sizes, coords);
+    }
     else if (ord == HILBERTIAN)
     {
         // Initialize by exponents of the given sizes
         Tuple<dim> exps(sizes, Binary_logarithm);
 
         return General_Hilbert_index<dim>(exps, coords);
+    }
+}
+
+//==============================================================================
+//  Compute patch coordinates
+//==============================================================================
+// Computes the coordinates of the patch corresponding to a chosen order
+template<Dimension dim, Order ord>
+static uint Compute_patch_coordinates(
+    const Tuple<dim> & sizes, const uint index, Tuple<dim> & coords
+)
+{
+    if (ord == CARTESIAN)
+    {
+        /// FIXME ///
+        Inverse_Cartesian_index<dim>(sizes, coords, index);
+    }
+    else if (ord == HILBERTIAN)
+    {
+        // Initialize by exponents of the given sizes
+        Tuple<dim> exps(sizes, Binary_logarithm);
+
+        // Convert the index to coordinates
+        Inverse_general_Hilbert_index<dim>(exps, coords, index);
     }
 }
 

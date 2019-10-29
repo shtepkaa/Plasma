@@ -125,6 +125,9 @@ struct Tuple
     friend Tuple operator+(Tuple, const Type &);
     friend Tuple operator+(Tuple, const Tuple &);
 
+    friend Tuple operator/(Tuple, const Type &);
+    friend Tuple operator/(Tuple, const Tuple &);
+
     /// useful /// friend Type Sum(const Tuple &, const uint = size);
 
     // Computes the product of the first entries of a tuple
@@ -164,6 +167,9 @@ struct Tuple
 
     Tuple & operator+=(const Type &);
     Tuple & operator+=(const Tuple &);
+
+    Tuple & operator/=(const Type &);
+    Tuple & operator/=(const Tuple &);
 
     //==========================================================================
     //  Access / mutate methods

@@ -11,7 +11,7 @@ static void Identify_descend_order(const uint *, uint *);
 //==============================================================================
 //  Bit access
 //==============================================================================
-static uint Get_bit(const uint n, const uint pos) { return (n >> pos) & 1U; }
+static uint Get_bit(const uint num, const uint pos) { return (num >> pos) & 1; }
 static void Set_bit(uint &, const uint, const uint);
 
 //==============================================================================
@@ -24,7 +24,7 @@ static uint Rotate_right(const uint, const uint, const uint);
 //  Binary reflected Gray code
 //==============================================================================
 static uint Gray_code(const uint num) { return num ^ (num >> 1); }
-static uint Gray_code_inverse(const uint);
+static uint Inverse_Gray_code(const uint);
 
 //==============================================================================
 //  Trailing set bit
@@ -41,7 +41,7 @@ static uint Entry(const uint);
 //  Standard transformation of Gray code with given entry and direction
 //==============================================================================
 static void Transform(const uint, const uint, uint &, const uint);
-static void Transform_inverse(const uint, const uint, uint &, const uint);
+static void Inverse_transform(const uint, const uint, uint &, const uint);
 
 //==============================================================================
 //  Hilbert index
@@ -52,7 +52,7 @@ template<Dimension>
 static uint Hilbert_index(const uint, const uint *, const uint, const uint);
 
 template<Dimension>
-static void Hilbert_index_inverse(
+static void Inverse_Hilbert_index(
     const uint, uint *, const uint, const uint, const uint
 );
 
@@ -67,7 +67,7 @@ template<Dimension>
 uint General_Hilbert_index(const uint *, const uint *);
 
 template<Dimension>
-void General_Hilbert_index_inverse(const uint *, uint *, const uint);
+void Inverse_general_Hilbert_index(const uint *, uint *, const uint);
 
 } // namespace maxwell
 

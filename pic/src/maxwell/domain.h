@@ -135,6 +135,9 @@ class TransferDescriptor
         //======================================================================
         //  Communication methods
         //======================================================================
+        void Pack_transfer_data(const Array<Patch> &);
+        void Unpack_transfer_data(const Array<Patch> &) const;
+
         void Send() const;
         void Receive();
 };
@@ -171,7 +174,7 @@ class Domain
         // Global range of ranks
         uint range;
 
-        // Grid Hilbert index decomposition
+        // Grid domain decomposition bounds
         Array<uint> domain_bounds;
 
         // Grid sizes
@@ -205,10 +208,12 @@ class Domain
         // Collects the domain bounds from all the processes
         void Set_domain_bounds();
 
+        void Allocate_patches();
+
         //======================================================================
         //  Intra-domain communication methods
         //======================================================================
-        void Perform_local_transfers()
+        void Perform_local_transfers();
 
         //======================================================================
         //  Inter-domain communication methods
@@ -232,11 +237,7 @@ class Domain
 
         void Set_transfer_descriptors();
 
-        // Prepare a transfer package to send
-        void Pack_transfer_data();
-
-        // Unpack a received transfer package
-        void Unpack_transfer_data();
+        void Perform_global_transfers();
 
         /// FIXME /// Either remove or switch to c++11: = delete
         Domain() {}
@@ -246,8 +247,7 @@ class Domain
         //======================================================================
         //  Data management
         //======================================================================
-        /// FIXME /// Patch sizes, width etc. should probably be included here
-        Domain(const Tuple<dim> &, const Tuple<dim> &);
+        Domain(const Tuple<dim> &, const Tuple<dim> &, const uint);
 
         ~Domain() {}
 

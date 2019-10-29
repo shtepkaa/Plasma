@@ -106,34 +106,69 @@ Tuple::Tuple(const Tuple & tup, Type (* const Mut)(const Type &))
 // Calculates the difference between the left argument
 // and a Tuple which entries all equal to the right argument
 template<uint size, typename Type>
-Tuple operator-(Tuple<size, Type> left, const Type & right)
+Tuple<size, Type> operator-(const Tuple<size, Type> left, const Type & right)
 {
-    left -= right;
-    return left;
+    Tuple<size, Type> res(left);
+    res -= right;
+
+    return res;
 }
 
 template<uint size, typename Type>
-Tuple operator-(Tuple<size, Type> left, const Tuple<size, Type> & right)
+Tuple<size, Type> operator-(
+    const Tuple<size, Type> left, const Tuple<size, Type> & right
+)
 {
-    left -= right;
-    return left;
+    Tuple<size, Type> res(left);
+    res -= right;
+
+    return res;
 }
 
 //==============================================================================
 //  Addition
 //==============================================================================
 template<uint size, typename Type>
-Tuple operator+(Tuple<size, Type> left, const Type & right)
+Tuple<size, Type> operator+(const Tuple<size, Type> left, const Type & right)
 {
-    left += right;
-    return left;
+    Tuple<size, Type> res(left);
+    res += right;
+
+    return res;
 }
 
 template<uint size, typename Type>
-Tuple operator+(Tuple<size, Type> left, const Tuple<size, Type> & right)
+Tuple<size, Type> operator+(
+    const Tuple<size, Type> left, const Tuple<size, Type> & right
+)
 {
-    left += right;
-    return left;
+    Tuple<size, Type> res(left);
+    res += right;
+
+    return res;
+}
+
+//==============================================================================
+//  Division
+//==============================================================================
+template<uint size, typename Type>
+Tuple<size, Type> operator/(const Tuple<size, Type> left, const Type & right)
+{
+    Tuple<size, Type> res(left);
+    res /= right;
+
+    return res;
+}
+
+template<uint size, typename Type>
+Tuple<size, Type> operator/(
+    const Tuple<size, Type> left, const Tuple<size, Type> & right
+)
+{
+    Tuple<size, Type> res(left);
+    res /= right;
+
+    return res;
 }
 
 /// useful /// //==============================================================================
@@ -184,31 +219,52 @@ void Tuple::Set(const Tuple & tup, Type (* const Mut)(const Type &))
 //==============================================================================
 // Subtracts a Tuple which entries all equal to the right argument
 // from the left argument
+template<uint size, typename Type>
 Tuple & Tuple::operator-=(const Type & val)
 {
-     Axpy(size, -1, &val, 0, data, 1);
-     return *this;
+    Axpy(size, -1, &val, 0, data, 1);
+    return *this;
 }
 
+template<uint size, typename Type>
 Tuple & Tuple::operator-=(const Tuple & tup)
 {
-     Axpy(size, -1, tup.data, 1, data, 1);
-     return *this;
+    Axpy(size, -1, tup.data, 1, data, 1);
+    return *this;
 }
 
 //==============================================================================
 //  Compound assignment by sum
 //==============================================================================
+template<uint size, typename Type>
 Tuple & Tuple::operator+=(const Type & val)
 {
-     Axpy(size, 1, &val, 0, data, 1);
-     return *this;
+    Axpy(size, 1, &val, 0, data, 1);
+    return *this;
 }
 
+template<uint size, typename Type>
 Tuple & Tuple::operator+=(const Tuple & tup)
 {
-     Axpy(size, 1, tup.data, 1, data, 1);
-     return *this;
+    Axpy(size, 1, tup.data, 1, data, 1);
+    return *this;
+}
+
+//==============================================================================
+//  Compound assignment by division
+//==============================================================================
+template<uint size, typename Type>
+Tuple & Tuple::operator/=(const Type & val)
+{
+    for (uint s = 0; s < size; ++s) { data[s] /= val; }
+    return *this;
+}
+
+template<uint size, typename Type>
+Tuple & Tuple::operator/=(const Tuple & tup)
+{
+    for (uint s = 0; s < size; ++s) { data[s] /= tup[s]; }
+    return *this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

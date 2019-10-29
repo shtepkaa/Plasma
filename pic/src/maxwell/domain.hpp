@@ -92,6 +92,48 @@ Type * TransferDescriptor::Receiving_buffer_record(const uint ind)
 }
 
 //==============================================================================
+//  Pack transfer data
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Pack_transfer_data(const Array<Patch> & patches)
+{
+    uint min_ind = patches[0].Get_index();
+
+    // For each buffer marking
+    for (int b = 0; b < buffer_markings.Get_size(); ++b)
+    {
+        const uint ind = buffer_markings[b].local_patch_index - min_ind;
+
+        // Copy the associated ghost to the correct sending buffer record
+        patches[ind].Copy_ghost(
+            buffer_markings[b].local_ghost_index, Sending_buffer_record(b)
+        );
+    }
+}
+
+//==============================================================================
+//  Unpack transfer data
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Unpack_transfer_data(
+    const Array<Patch> & patches
+) const
+{
+    uint min_ind = patches[0].Get_index();
+
+    // For each buffer marking
+    for (int b = 0; b < buffer_markings.Get_size(); ++b)
+    {
+        const uint ind = buffer_markings[b].local_patch_index - min_ind;
+
+        // Copy the associated receiving buffer record to the correct ghost
+        patches[ind].Set_ghost(
+            buffer_markings[b].local_ghost_index, Receiving_buffer_record(b)
+        );
+    }
+}
+
+//==============================================================================
 //  Send
 //==============================================================================
 template<typename Type>
@@ -114,6 +156,14 @@ void TransferDescriptor::Send() const
         MPI_COMM_WORLD,
         request
     );
+}
+
+//==============================================================================
+//  Receive
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Receive()
+{
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -161,6 +211,28 @@ void Domain::Set_domain_bounds()
         (void *)(domain_bounds + rank), 1, MPI_UNSIGNED, (void *)domain_bounds,
         1, MPI_UNSIGNED, MPI_COMM_WORLD
     );
+}
+
+//==============================================================================
+//  Allocate patches
+//==============================================================================
+template<Dimension dim, Order ord, typename Type>
+void Allocate_patches(const uint ghost_width);
+{
+    patches.Reallocate(Get_patch_count());
+
+    for (uint p = 0; p < patches.Get_size(); ++p)
+    {
+        /// Coordinates or index should be provided? (Coordinates probably)
+        /// TO BE CONTINUED
+        patches[p].Set_data(
+            grid_sizes / patch_sizes,
+                const Tuple<dim> & patch_coordinates,
+            patch_sizes,
+            ghost_width,
+                const uint index
+        );
+    }
 }
 
 //==============================================================================
@@ -333,84 +405,35 @@ void Domain::Perform_local_transfers()
 }
 
 //==============================================================================
-//  Pack transfer data
-//==============================================================================
-template<Dimension dim, Order ord, typename Type>
-void Domain::Pack_transfer_data()
-{
-    // For each transfer descriptor
-    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
-    {
-        const TransferDescriptor<Type> & desc = transfer_descriptors[t];
-        const BufferMarking & markings = desc.Get_buffer_markings();
-
-        // For each buffer marking
-        for (int b = 0; b < markings.Get_size(); ++b)
-        {
-            const uint ind
-                = markings[b].local_patch_index - Get_patch_min_index();
-
-            // Copy the associated ghost to the correct sending buffer record
-            patches[ind].Copy_ghost(
-                markings[b].local_ghost_index, desc.Sending_buffer_record(b)
-            );
-        }
-    }
-}
-
-//==============================================================================
-//  Unpack transfer data
-//==============================================================================
-template<Dimension dim, Order ord, typename Type>
-void Domain::Unpack_transfer_data()
-{
-    // For each transfer descriptor
-    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
-    {
-        const TransferDescriptor<Type> & desc = transfer_descriptors[t];
-        const BufferMarking & markings = desc.Get_buffer_markings();
-
-        // For each buffer marking
-        for (int b = 0; b < markings.Get_size(); ++b)
-        {
-            const uint ind
-                = markings[b].local_patch_index - Get_patch_min_index();
-
-            // Copy the associated receiving buffer record to the correct ghost
-            patches[ind].Set_ghost(
-                markings[b].local_ghost_index, desc.Receiving_buffer_record(b)
-            );
-        }
-    }
-}
-
-//==============================================================================
 //  Perform global transfers
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
 void Domain::Perform_global_transfers()
 {
-    Pack_transfer_data();
-
     for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
+        transfer_descriptors[t].Pack_transfer_data(patches);
         transfer_descriptors[t].Send();
-        transfer_descriptors[t].Receive();
-    }
 
-    Unpack_transfer_data();
+        transfer_descriptors[t].Receive();
+        transfer_descriptors[t].Unpack_transfer_data(patches);
+    }
 }
 
 //==============================================================================
 //  Data management
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
+Domain::Domain(
+    const Tuple<dim> & data_grid_sizes,
+    const Tuple<dim> & data_patch_sizes,
+    const uint ghost_width
+):
     rank(0),
     range(0),
     domain_bounds(),
-    grid_sizes(grid_sizs),
-    patch_sizes(patch_sizs),
+    grid_sizes(data_grid_sizes),
+    patch_sizes(data_patch_sizes),
     patches(),
     local_markings(),
     transfer_descriptors()
@@ -420,13 +443,10 @@ Domain::Domain(const Tuple<dim> & grid_sizs, const Tuple<dim> & patch_sizs):
 
     Initialize_domain_bounds();
 
-    /// TODO /// Patch allocation
-    /// ??? /// patches.Reallocate(Get_patch_count());
+    Allocate_patches(ghost_width);
 
-    if (range)
-    {
-        Set_transfer_descriptors();
-    }
+    // Configure communication descriptors in case of multi-process computation 
+    if (range) { Set_transfer_descriptors(); }
 }
 
 //==============================================================================
