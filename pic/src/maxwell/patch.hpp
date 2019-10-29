@@ -138,11 +138,8 @@ void Set_data(
 //==============================================================================
 //  Compute patch index
 //==============================================================================
-// Computes the index of the patch corresponding to a chosen order
 template<Dimension dim, Order ord>
-static uint Compute_patch_index(
-    const Tuple<dim> & sizes, const Tuple<dim> & coords
-)
+uint Compute_patch_index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
 {
     if (ord == CARTESIAN)
     {
@@ -161,12 +158,11 @@ static uint Compute_patch_index(
 //==============================================================================
 //  Compute patch coordinates
 //==============================================================================
-// Computes the coordinates of the patch corresponding to a chosen order
 template<Dimension dim, Order ord>
-static uint Compute_patch_coordinates(
-    const Tuple<dim> & sizes, const uint index, Tuple<dim> & coords
-)
+Tuple<dim> Compute_patch_coordinates(const Tuple<dim> & sizes, const uint index)
 {
+    Tuple<dim> coords;
+
     if (ord == CARTESIAN)
     {
         /// FIXME ///
@@ -180,6 +176,8 @@ static uint Compute_patch_coordinates(
         // Convert the index to coordinates
         Inverse_general_Hilbert_index<dim>(exps, coords, index);
     }
+
+    return coords;
 }
 
 //==============================================================================

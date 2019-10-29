@@ -122,6 +122,20 @@ struct PatchData
     ~PatchData() { if (data) { CUDA_CALL(cudaFree(data)); } }
 };
 
+//==============================================================================
+//  Compute patch index
+//==============================================================================
+// Computes the index of the patch corresponding to a chosen order
+template<Dimension dim, Order ord>
+uint Compute_patch_index(const Tuple<dim> &, const Tuple<dim> &);
+
+//==============================================================================
+//  Compute patch coordinates
+//==============================================================================
+// Computes the coordinates of the patch corresponding to a chosen order
+template<Dimension dim, Order ord>
+Tuple<dim> Compute_patch_coordinates(const Tuple<dim> &, const uint);
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  Patch

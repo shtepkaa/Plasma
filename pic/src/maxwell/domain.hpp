@@ -95,12 +95,15 @@ Type * TransferDescriptor::Receiving_buffer_record(const uint ind)
 //  Pack transfer data
 //==============================================================================
 template<typename Type>
-void TransferDescriptor::Pack_transfer_data(const Array<Patch> & patches)
+template<Dimension dim, Order ord>
+void TransferDescriptor::Pack_transfer_data(
+    const Array< Patch<dim, ord, Type> > & patches
+)
 {
     uint min_ind = patches[0].Get_index();
 
     // For each buffer marking
-    for (int b = 0; b < buffer_markings.Get_size(); ++b)
+    for (uint b = 0; b < buffer_markings.Get_size(); ++b)
     {
         const uint ind = buffer_markings[b].local_patch_index - min_ind;
 
@@ -115,14 +118,15 @@ void TransferDescriptor::Pack_transfer_data(const Array<Patch> & patches)
 //  Unpack transfer data
 //==============================================================================
 template<typename Type>
+template<Dimension dim, Order ord>
 void TransferDescriptor::Unpack_transfer_data(
-    const Array<Patch> & patches
+    Array< Patch<dim, ord, Type> > & patches
 ) const
 {
     uint min_ind = patches[0].Get_index();
 
     // For each buffer marking
-    for (int b = 0; b < buffer_markings.Get_size(); ++b)
+    for (uint b = 0; b < buffer_markings.Get_size(); ++b)
     {
         const uint ind = buffer_markings[b].local_patch_index - min_ind;
 
@@ -146,13 +150,13 @@ void TransferDescriptor::Send() const
 
     MPI_Request request;
 
-    int MPI_Isend(
+    uint MPI_Isend(
         (void *)data->rankbuffer,
         data->rankize,
             MPI_Datatype, /// Create MPI datatype
                           /// for sending structure somewhere else
         data->rank,
-            int tag, /// Create tag /// ??? send + recv + iteration_number
+            uint tag, /// Create tag /// ??? send + recv + iteration_number
         MPI_COMM_WORLD,
         request
     );
@@ -178,7 +182,7 @@ void TransferDescriptor::Receive()
 template<Dimension dim, Order ord, typename Type>
 void Domain::Initialize_domain_bounds()
 {
-    domain_bounds.Reallocate(range + 1);
+    domain_bounds.Allocate(range + 1);
     domain_bounds[0] = 0;
 
     if (ord == CARTESIAN)
@@ -219,18 +223,20 @@ void Domain::Set_domain_bounds()
 template<Dimension dim, Order ord, typename Type>
 void Allocate_patches(const uint ghost_width);
 {
-    patches.Reallocate(Get_patch_count());
+    Tuple<dim> layer_sizes = grid_sizes / patch_sizes;
 
+    patches.Allocate(Get_patch_count());
+
+#pragma omp parallel for
     for (uint p = 0; p < patches.Get_size(); ++p)
     {
-        /// Coordinates or index should be provided? (Coordinates probably)
-        /// TO BE CONTINUED
+        uint patch_index = Get_min_patch_index() + p;
+
+        const Tuple<dim> patch_coords
+            = Compute_patch_coordinates<dim, ord>(layer_sizes, patch_index);
+
         patches[p].Set_data(
-            grid_sizes / patch_sizes,
-                const Tuple<dim> & patch_coordinates,
-            patch_sizes,
-            ghost_width,
-                const uint index
+            layer_sizes, patch_coords, patch_sizes, ghost_width, patch_index
         );
     }
 }
@@ -262,7 +268,7 @@ void Domain::Create_transfer_descriptor(const uint ind, const uint rank)
     transfer_descriptors.Append();
 
     // Shift the right part of the array
-    for (int t = transfer_descriptors.Get_size() - 1; t > ind; --t)
+    for (uint t = transfer_descriptors.Get_size() - 1; t > ind; --t)
     {
         transfer_descriptors[t] = transfer_descriptors[t - 1];
     }
@@ -385,11 +391,11 @@ void Domain::Set_transfer_descriptors()
         }
     }
 
-    // Allocate buffers here
-    Allocate_transfer_buffers();
-
     // Shrink to fit
     transfer_descriptors.Truncate();
+
+    // Allocate buffers here
+    Allocate_transfer_buffers();
 }
 
 //==============================================================================
@@ -410,7 +416,7 @@ void Domain::Perform_local_transfers()
 template<Dimension dim, Order ord, typename Type>
 void Domain::Perform_global_transfers()
 {
-    for (int t = 0; t < transfer_descriptors.Get_size(); ++t)
+    for (uint t = 0; t < transfer_descriptors.Get_size(); ++t)
     {
         transfer_descriptors[t].Pack_transfer_data(patches);
         transfer_descriptors[t].Send();
@@ -453,10 +459,10 @@ Domain::Domain(
 //  Get patches index range
 //==============================================================================
 // [unsafe]
-uint Get_patch_min_index(const uint ind) const { return domain_bounds[ind]; }
+uint Get_min_patch_index(const uint ind) const { return domain_bounds[ind]; }
 
 // [unsafe]
-uint Get_patch_max_index(const uint ind) const
+uint Get_max_patch_index(const uint ind) const
 {
     return domain_bounds[ind + 1];
 }

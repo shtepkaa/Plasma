@@ -5,7 +5,7 @@ namespace maxwell {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  BLAS-like generic functions
+//  BLAS-like generic routines
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
@@ -85,7 +85,7 @@ uint Find_index(const Array<ElementType> & arr, const ValueType & val)
 //==============================================================================
 //
 //==============================================================================
-/// TODO /// Move sort algorithms here
+/// TODO /// Move sort routines here
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -223,6 +223,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator-=(const Type & val)
 {
     Axpy(size, -1, &val, 0, data, 1);
+
     return *this;
 }
 
@@ -230,6 +231,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator-=(const Tuple & tup)
 {
     Axpy(size, -1, tup.data, 1, data, 1);
+
     return *this;
 }
 
@@ -240,6 +242,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator+=(const Type & val)
 {
     Axpy(size, 1, &val, 0, data, 1);
+
     return *this;
 }
 
@@ -247,6 +250,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator+=(const Tuple & tup)
 {
     Axpy(size, 1, tup.data, 1, data, 1);
+
     return *this;
 }
 
@@ -257,6 +261,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator/=(const Type & val)
 {
     for (uint s = 0; s < size; ++s) { data[s] /= val; }
+
     return *this;
 }
 
@@ -264,6 +269,7 @@ template<uint size, typename Type>
 Tuple & Tuple::operator/=(const Tuple & tup)
 {
     for (uint s = 0; s < size; ++s) { data[s] /= tup[s]; }
+
     return *this;
 }
 
@@ -273,10 +279,10 @@ Tuple & Tuple::operator/=(const Tuple & tup)
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Reallocate
+//  Allocate
 //==============================================================================
 template<typename Type>
-void Array::Reallocate(const uint cap)
+void Array::Allocate(const uint cap)
 {
     if (capacity != cap)
     {
@@ -305,24 +311,27 @@ void Array::Reallocate(const uint cap)
 template<typename Type>
 void Array::Set(const uint cap, const Type & val)
 {
-    Reallocate(cap);
+    Allocate(cap);
     size = capacity;
+
     Copy(size, &val, 0, data, 1);
 }
 
 template<typename Type>
 void Array::Set(const uint cap, const Type * dat)
 {
-    Reallocate(cap);
+    Allocate(cap);
     size = capacity;
+
     if (dat) { Copy(size, dat, 1, data, 1); }
 }
 
 template<typename Type>
 void Array::Set(const Array & arr)
 {
-    Reallocate(arr.size);
+    Allocate(arr.size);
     size = capacity;
+
     Copy(size, arr.data, 1, data, 1);
 }
 
@@ -347,7 +356,7 @@ Array::Array(const uint cap, const Type * dat): capacity(0), size(0), data(NULL)
 template<typename Type>
 void Array::Append()
 {
-    if (capacity == size) { Reallocate(2 * size); }
+    if (capacity == size) { Allocate(2 * size); }
 
     ++size;
 }
@@ -355,7 +364,7 @@ void Array::Append()
 template<typename Type>
 void Array::Append(const Type & val)
 {
-    if (capacity == size) { Reallocate(2 * size); }
+    if (capacity == size) { Allocate(2 * size); }
 
     data[size] = val;
     ++size;

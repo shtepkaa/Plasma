@@ -7,7 +7,7 @@ namespace maxwell {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  BLAS-like generic functions
+//  BLAS-like generic routines
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
@@ -205,10 +205,10 @@ class Array
         //  Data management
         //======================================================================
         // Changes capacity
-        void Reallocate(const uint = 0);
+        void Allocate(const uint = 0);
 
         // Removes trailing elements from the end
-        void Truncate() { Reallocate(size); }
+        void Truncate() { Allocate(size); }
 
         // Initialize the array with predefined elements
         void Set(const uint, const Type &);
@@ -222,7 +222,7 @@ class Array
 
         Array & operator=(const Array & arr) { Set(arr); return *this; }
 
-        ~Array() { Reallocate(); }
+        ~Array() { Allocate(); }
 
         //======================================================================
         //  Access / mutate methods

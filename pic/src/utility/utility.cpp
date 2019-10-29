@@ -5,9 +5,8 @@
 namespace maxwell {
 
 //==============================================================================
-//  Binary_logarithm
+//  Binary logarithm
 //==============================================================================
-// Calculates exponent for a given integer power of two
 uint Binary_logarithm(const uint num)
 {
     uint res = 0;
@@ -46,7 +45,7 @@ uint Power(const uint base, const uint exponent)
 }
 
 //==============================================================================
-//  Sub_hypercube_count
+//  Sub hypercube count
 //==============================================================================
 // recursive
 uint Sub_hypercube_count(const int sub_dim, const int dim)

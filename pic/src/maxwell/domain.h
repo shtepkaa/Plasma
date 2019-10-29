@@ -135,8 +135,11 @@ class TransferDescriptor
         //======================================================================
         //  Communication methods
         //======================================================================
-        void Pack_transfer_data(const Array<Patch> &);
-        void Unpack_transfer_data(const Array<Patch> &) const;
+        template<Dimension dim, Order ord>
+        void Pack_transfer_data(const Array< Patch<dim, ord, Type> > &);
+
+        template<Dimension dim, Order ord>
+        void Unpack_transfer_data(Array< Patch<dim, ord, Type> > &) const;
 
         void Send() const;
         void Receive();
@@ -235,6 +238,7 @@ class Domain
         // Allocates inter-domain transfer buffers on device 
         void Allocate_transfer_buffers();
 
+        // Configures inter-domain communications
         void Set_transfer_descriptors();
 
         void Perform_global_transfers();
@@ -257,8 +261,8 @@ class Domain
         inline uint Get_rank() const { return rank; }
 
         // Returns patch indices range for a given domain
-        uint Get_patch_min_index(const uint = rank) const;
-        uint Get_patch_max_index(const uint = rank) const;
+        uint Get_min_patch_index(const uint = rank) const;
+        uint Get_max_patch_index(const uint = rank) const;
 
         // Computes patch count for a given domain
         uint Get_patch_count(const uint = rank) const;
