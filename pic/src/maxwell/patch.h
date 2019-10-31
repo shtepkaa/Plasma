@@ -16,14 +16,11 @@ namespace maxwell {
 template<Dimension dim, typename Type>
 struct GhostMarking
 {
-    // Ghost sizes
+    // Sizes
     Tuple<dim> sizes;
 
-    // Receiving ghost offset
-    uint send_offset;
-
-    // Sending ghost offset
-    uint recv_offset;
+    uint sending_offset;
+    uint receiving_offset;
 
     // Index of a patch to communicate with
     uint target_patch_index;
@@ -34,28 +31,28 @@ struct GhostMarking
     GhostMarking();
 };
 
-/// ??? /// ////////////////////////////////////////////////////////////////////////////////
-/// ??? /// //
-/// ??? /// //  Ghost index and directions computation functions
-/// ??? /// //
-/// ??? /// ////////////////////////////////////////////////////////////////////////////////
-/// ??? /// //==============================================================================
-/// ??? /// //  Compute ghost index
-/// ??? /// //==============================================================================
-/// ??? /// template<Dimension dim>
-/// ??? /// uint8_t Compute_ghost_index(const Tuple<dim, Direction> &);
-/// ??? /// 
-/// ??? /// //==============================================================================
-/// ??? /// //  Compute ghost directions
-/// ??? /// //==============================================================================
-/// ??? /// template<Dimension dim>
-/// ??? /// Tuple<dim, Direction> & Compute_ghost_directions(const uint8_t);
-/// ??? /// 
-/// ??? /// //==============================================================================
-/// ??? /// //  Reflect ghost directions
-/// ??? /// //==============================================================================
-/// ??? /// template<Dimension dim>
-/// ??? /// Tuple<dim, Direction> & Reflect_ghost_directions(Tuple<dim, Direction> &);
+/// static ??? /// ////////////////////////////////////////////////////////////////////////////////
+///  static ??? /// //
+///  static ??? /// //  Ghost index and directions computation functions
+///  static ??? /// //
+///  static ??? /// ////////////////////////////////////////////////////////////////////////////////
+///  static ??? /// //==============================================================================
+///  static ??? /// //  Compute ghost index
+///  static ??? /// //==============================================================================
+///  static ??? /// template<Dimension dim>
+///  static ??? /// uint8_t Compute_ghost_index(const Tuple<dim, Direction> &);
+///  static ??? /// 
+///  static ??? /// //==============================================================================
+///  static ??? /// //  Compute ghost directions
+///  static ??? /// //==============================================================================
+///  static ??? /// template<Dimension dim>
+///  static ??? /// Tuple<dim, Direction> & Compute_ghost_directions(const uint8_t);
+///  static ??? /// 
+///  static ??? /// //==============================================================================
+///  static ??? /// //  Reflect ghost directions
+///  static ??? /// //==============================================================================
+///  static ??? /// template<Dimension dim>
+///  static ??? /// Tuple<dim, Direction> & Reflect_ghost_directions(Tuple<dim, Direction> &);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -185,10 +182,13 @@ class Patch
             /// ??? /// inline Type & operator[](const uint ind) { return data->data[ind]; }
             /// ??? /// inline const Type & operator[](const uint i) const { return data->data[i]; }
 
-        // Sets / copies ghost data from / to a raw pointer to address
-        void Set_ghost(const uint, const Type *);
-        void Copy_ghost(const uint, Type *) const;
-}
+        // Sends / receives ghost data from / to a raw pointer to address
+        void Send_ghost(const uint8_t, Type *) const;
+        void Receive_ghost(const uint8_t, const Type *);
+
+        // Transfers ghost data from one patch to another
+        void Transfer_ghost(const uint8_t, const Patch &, const uint8_t) const;
+};
 
 } // namespace maxwell
 

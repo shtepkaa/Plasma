@@ -6,32 +6,32 @@ namespace maxwell {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  BufferMarking
+//  TransferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-BufferMarking::BufferMarking(): 
+TransferMarking::TransferMarking(): 
     size(0),
     offset(~0),
-    local_patch_index(~0),
-    extern_patch_index(~0),
-    local_ghost_index(~0),
-    extern_ghost_index(~0)
+    sending_patch_index(~0),
+    receiving_patch_index(~0),
+    sending_ghost_index(~0),
+    receiving_ghost_index(~0)
 {}
 
-BufferMarking::BufferMarking(
+TransferMarking::TransferMarking(
     const uint buffer_size,
-    const uint off,
-    const uint local_patch_ind,
-    const uint extern_patch_ind,
-    const uint8_t local_ghost_ind,
-    const uint8_t extern_ghost_ind
+    const uint buffer_offset,
+    const uint sending_patch_ind,
+    const uint receiving_patch_ind,
+    const uint8_t sending_ghost_ind,
+    const uint8_t receiving_ghost_ind
 ):
     size(buffer_size),
-    offset(off),
-    local_patch_index(local_patch_ind),
-    extern_patch_index(extern_patch_ind),
-    local_ghost_index(local_ghost_ind),
-    extern_ghost_index(extern_ghost_ind)
+    offset(buffer_offset),
+    sending_patch_index(sending_patch_ind),
+    receiving_patch_index(receiving_patch_ind),
+    sending_ghost_index(sending_ghost_ind),
+    receiving_ghost_index(receiving_ghost_ind)
 {}
 
 } // namespace maxwell

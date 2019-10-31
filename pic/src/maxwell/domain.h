@@ -9,29 +9,29 @@ namespace maxwell {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  BufferMarking
+//  TransferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Contains buffer marking data corresponding to a single ghost transfer
+// Contains transfer marking data corresponding to a single ghost transfer
 ////////////////////////////////////////////////////////////////////////////////
-struct BufferMarking
+struct TransferMarking
 {
-    // Transfer data size
+    // Data size
     uint size;
 
-    // Transfer data offset in buffer
+    // Data offset in buffer
     uint offset;
 
-    uint local_patch_index;
-    uint extern_patch_index;
+    uint sending_patch_index;
+    uint receiving_patch_index;
 
     // Indices of corresponding ghosts in a patch
-    uint8_t local_ghost_index;
-    uint8_t extern_ghost_index;
+    uint8_t sending_ghost_index;
+    uint8_t receiving_ghost_index;
 
-    BufferMarking();
+    TransferMarking();
 
-    BufferMarking(
+    TransferMarking(
         const uint,
         const uint,
         const uint,
@@ -61,7 +61,7 @@ struct TransferDescriptorData
     uint rank;
 
     // Buffer markings
-    Array<BufferMarking> buffer_markings;
+    Array<TransferMarking> transfer_markings;
 
     // Size of buffer
     uint buffer_size;
@@ -112,7 +112,7 @@ class TransferDescriptor
         void Set_data(const uint);
         void Allocate_buffers();
 
-        void Add_buffer_marking(const BufferMarking &);
+        void Add_transfer_marking(const TransferMarking &);
 
         TransferDescriptor(): data(NULL) {}
         ~TransferDescriptor() { delete data; }
@@ -125,7 +125,7 @@ class TransferDescriptor
         inline uint Get_buffer_size() const { return data->buffer_size; }
         void Update_buffer_size(const uint);
 
-        const Array<BufferMarking> & Get_buffer_markings() const;
+        const Array<TransferMarking> & Get_transfer_markings() const;
 
         // Returns a raw pointer to the buffer location corresponding
         // to the record with a given index
@@ -195,7 +195,7 @@ class Domain
         //======================================================================
         //  Intra-domain communication markings
         //======================================================================
-        Array<BufferMarking> local_markings;
+        Array<TransferMarking> local_markings;
 
         //======================================================================
         //  Inter-domain communication descriptors
@@ -229,9 +229,9 @@ class Domain
         // Returns a transfer descriptor corresponding to a target MPI rank
         TransferDescriptor<Type> & Get_transfer_descriptor(const uint);
 
-        // Creates the buffer marking in the correct transfer descriptor array
+        // Creates the transfer marking in the correct transfer descriptor array
         // corrseponding to a given sender date and a ghost marking
-        void Create_buffer_marking(
+        void Create_transfer_marking(
             const uint, const uint8_t, const GhostMarking &
         );
 
@@ -239,7 +239,7 @@ class Domain
         void Allocate_transfer_buffers();
 
         // Configures inter-domain communications
-        void Set_transfer_descriptors();
+        void Set_transfer_markings();
 
         void Perform_global_transfers();
 

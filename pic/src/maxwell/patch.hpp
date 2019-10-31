@@ -16,8 +16,8 @@ namespace maxwell {
 ////////////////////////////////////////////////////////////////////////////////
 GhostMarking::GhostMarking():
     sizes(),
-    send_offset(0),
-    recv_offset(0),
+    sending_offset(0),
+    receiving_offset(0),
     target_patch_index(~0),
     target_ghost_index(~0)
 {}
@@ -151,6 +151,7 @@ uint Compute_patch_index(const Tuple<dim> & sizes, const Tuple<dim> & coords)
         // Initialize by exponents of the given sizes
         Tuple<dim> exps(sizes, Binary_logarithm);
 
+        // Convert the coordinates to index
         return General_Hilbert_index<dim>(exps, coords);
     }
 }
@@ -195,17 +196,17 @@ void Patch::Set_ghost_markings(const uint index)
     }
 
     // Compute offsets along all axes
-    uint send_offsets[dim][3];
-    uint recv_offsets[dim][3];
+    uint sending_offsets[dim][3];
+    uint receiving_offsets[dim][3];
     
     for (int d = 0; d < dim; ++d)
     {
-        send_offsets[d][0] = data->ghost_width * prods[d];
-        send_offsets[d][1] = send_offsets[d][0];
-        send_offsets[d][2] = data->sizes[d] * prods[d];
+        sending_offsets[d][0] = data->ghost_width * prods[d];
+        sending_offsets[d][1] = sending_offsets[d][0];
+        sending_offsets[d][2] = data->sizes[d] * prods[d];
 
-        recv_offsets[d][1] = send_offsets[d][0];
-        recv_offsets[d][2] = send_offsets[d][0] + send_offsets[d][2];
+        receiving_offsets[d][1] = sending_offsets[d][0];
+        receiving_offsets[d][2] = sending_offsets[d][0] + sending_offsets[d][2];
     }
 
     // For all ghosts
@@ -228,8 +229,8 @@ void Patch::Set_ghost_markings(const uint index)
         // Set sizes, sending and receiving offsets
         for (int d = 0; d < dim; ++d)
         {
-            marking.send_offset += send_offsets[d][directions[d]];
-            marking.recv_offset += recv_offsets[d][directions[d]];
+            marking.sending_offset += sending_offsets[d][directions[d]];
+            marking.receiving_offset += receiving_offsets[d][directions[d]];
 
             marking.sizes[d]
                 = (directions[d] - 1)?
@@ -264,19 +265,29 @@ const Array<GhostMarking> & Patch::Get_ghost_markings() const
 }
 
 //==============================================================================
-//  Set ghost
+//  Send ghost
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Patch::Set_ghost(const uint ind, const Type * buf)
+void Patch::Send_ghost(const uint8_t ind, Type * buf) const
 {
     /// TODO /// Cuda copy from device to device
 }
 
 //==============================================================================
-//  Get ghost
+//  Receive ghost
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Patch::Copy_ghost(const uint ind, Type * buf) const
+void Patch::Receive_ghost(const uint8_t ind, const Type * buf)
+{
+    /// TODO /// Cuda copy from device to device
+}
+
+//==============================================================================
+//  Transfer ghost
+//==============================================================================
+void Patch::Transfer_ghost(
+    const uint8_t send_ind, const Patch & recv_patch, const uint8_t recv_ghost
+) const
 {
     /// TODO /// Cuda copy from device to device
 }
