@@ -1,22 +1,18 @@
 #ifndef FIELD_H
 #define FIELD_H
 
+#include<types.h>
+
 namespace maxwell {
 
-struct Field
+template<Dimension dim, typename Type>
+struct ElectroMagneticField
 {
-    private:
-
-        // device data
-        void * data;
-        
-    public:
-
-        Field();
-        ~Field();
-
-        //
-
+    Tuple<dim, Type> E;
+    Tuple<dim, Type> B;
+    
+    Field(const Tuple<dim, Type> &, const Tuple<dim, Type> &);
+    ~Field() {}
 };
 
 } // namespace maxwell

@@ -1,14 +1,12 @@
-// hilbert.cpp
+// src/.../hilbert_index.cpp
 
-#include "hilbert.h"
+#include "hilbert_index.h"
 
 namespace maxwell {
 
 //==============================================================================
 //  Identify descend order in 3D
 //==============================================================================
-// Finds the descending order of argument entries
-// -----------------------------------------------------------------------------
 void Identify_descend_order(const uint * arg, uint * order)
 {
     const uint comp[THREE_DIM]
@@ -22,8 +20,6 @@ void Identify_descend_order(const uint * arg, uint * order)
 //==============================================================================
 //  Set bit
 //==============================================================================
-// Sets the bit of a number with a given position to a value
-// -----------------------------------------------------------------------------
 void Set_bit(uint & num, const uint pos, const uint val)
 {
     num = (num & ~(1U << pos)) | (val << pos);
@@ -32,9 +28,7 @@ void Set_bit(uint & num, const uint pos, const uint val)
 //==============================================================================
 //  Bitwise cyclic left rotation 
 //==============================================================================
-// Retains only the first exp bits
-// -----------------------------------------------------------------------------
-// works only for (shift <= exp)
+// Works only for (shift <= exp)
 // -----------------------------------------------------------------------------
 uint Rotate_left(const uint val, const uint shift, const uint exp)
 {
@@ -44,9 +38,7 @@ uint Rotate_left(const uint val, const uint shift, const uint exp)
 //==============================================================================
 //  Bitwise cyclic right rotation 
 //==============================================================================
-// Retains only the first exp bits
-// -----------------------------------------------------------------------------
-// works only for (shift <= exp)
+// Works only for (shift <= exp)
 // -----------------------------------------------------------------------------
 uint Rotate_right(const uint val, const uint shift, const uint exp)
 {
@@ -56,14 +48,11 @@ uint Rotate_right(const uint val, const uint shift, const uint exp)
 //==============================================================================
 //  Inverse Gray code
 //==============================================================================
-// Calculates the non-negative integer "num" such that Gray_code(num) = code,
-// for non-negative integer "code"
-// -----------------------------------------------------------------------------
 uint Inverse_Gray_code(const uint code)
 {
     uint num = code;
 
-    for (int c = 1; (1U << c) <= code; ++c) { num ^= code >> c; }
+    for (uint c = 1; (1U << c) <= code; ++c) { num ^= code >> c; }
 
     return num;
 }
@@ -71,23 +60,27 @@ uint Inverse_Gray_code(const uint code)
 //==============================================================================
 //  Trailing set bit
 //==============================================================================
-// Computes number of trailing set bits in the binary representation of number,
-// which is also the inter sub-hypercube direction
-// -----------------------------------------------------------------------------
 uint Trailing_set_bit(const uint num)
 {
     uint count = 0;
 
-    for (int n = num; n & 1; n >>= 1) { ++count; }
+    for (uint n = num; n & 1; n >>= 1) { ++count; }
 
     return count;
 }
 
 //==============================================================================
+//  Entry
+//==============================================================================
+uint Entry(const uint ind)
+{
+    if (ind) { return Gray_code(((ind - 1) >> 1) << 1); }
+    else { return 0; }
+}
+
+//==============================================================================
 //  Direction
 //==============================================================================
-// Computes intra sub-hypercube direction for given index
-// -----------------------------------------------------------------------------
 // (0 <= ind < 2^{exp})
 // -----------------------------------------------------------------------------
 uint Direction(const uint ind, const uint exp)
@@ -98,25 +91,8 @@ uint Direction(const uint ind, const uint exp)
 }
 
 //==============================================================================
-//  Entry
-//==============================================================================
-// Computes entry point for given index
-// -----------------------------------------------------------------------------
-// (0 <= ind < 2^{exp})
-// -----------------------------------------------------------------------------
-uint Entry(const uint ind)
-{
-    if (ind) { return Gray_code(((ind - 1) >> 1) << 1); }
-    else { return 0; }
-}
-
-//==============================================================================
 //  Transform
 //==============================================================================
-// Computes transformation such that the Gray code ordering of sub-hypercubes
-// in the Hilbert curve defined by "entry" and "dir"
-// will map to the standard binary reflected Gray code
-// -----------------------------------------------------------------------------
 void Transform(const uint entry, const uint dir, uint & bin, const uint exp)
 {
     bin = Rotate_right(bin ^ entry, dir + 1, exp);
@@ -132,10 +108,6 @@ void Inverse_transform(
 //==============================================================================
 //  Hilbert index with orientation in 2D
 //==============================================================================
-// Calculates the Hilbert index and orientation of a patch
-// with given coordinates for simulation box with 2^{exp} patches per side
-// (2^{2 * exp} patches in total)
-// -----------------------------------------------------------------------------
 uint Hilbert_index_orientation(
     const uint exp, const uint * coords, uint & entry, uint & dir
 )
@@ -150,7 +122,7 @@ uint Hilbert_index_orientation(
         loc = (Get_bit(coords[1], i) << 1) + Get_bit(coords[0], i);
         Transform(entry, dir, loc, 2);
 
-        loc_ind = Gray_code_inverse(loc);
+        loc_ind = Inverse_Gray_code(loc);
 
         entry ^= Rotate_left(Entry(loc_ind), dir + 1, 2);
         dir = (dir + Direction(loc_ind, 2) + 1) & 1;
@@ -163,10 +135,6 @@ uint Hilbert_index_orientation(
 //==============================================================================
 //  Hilbert index in 2D
 //==============================================================================
-// Calculates the Hilbert index of patch of given coordinates
-// for a simulation box with 2^{exp} patches
-// per side (2^{2 * exp} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 uint Hilbert_index<TWO_DIM>(const uint exp, const uint * coords)
 {
@@ -179,10 +147,6 @@ uint Hilbert_index<TWO_DIM>(const uint exp, const uint * coords)
 //==============================================================================
 //  Hilbert index in 3D
 //==============================================================================
-// Calculates the Hilbert index of patch of given coordinates
-// for a simulation box with 2^{exp} patches
-// per side (2^{3 * exp} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 uint Hilbert_index<THREE_DIM>(
     const uint exp, const uint * coords, const uint entry, const uint dir
@@ -212,10 +176,6 @@ uint Hilbert_index<THREE_DIM>(
 //==============================================================================
 //  Inverse Hilbert index in 2D
 //==============================================================================
-// Calculates the coordinates of a patch with given Hilbert index
-// in a simulation box with 2^{exp} patches per side
-// (2^{2 * exp} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 void Inverse_Hilbert_index<TWO_DIM>(
     const uint exp,
@@ -247,10 +207,6 @@ void Inverse_Hilbert_index<TWO_DIM>(
 //==============================================================================
 //  Inverse Hilbert index in 3D
 //==============================================================================
-// Calculates the coordinates of a patch with given Hilbert index
-// in a simulation box with 2^{exp} patches per side
-// (2^{3 * exp} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 void Inverse_Hilbert_index<THREE_DIM>(
     const uint exp,
@@ -286,10 +242,6 @@ void Inverse_Hilbert_index<THREE_DIM>(
 //==============================================================================
 //  General Hilbert index with orientation in 2D
 //==============================================================================
-// Calculates Hilbert index and orientation of a patch with given coordinates
-// for a simulation box with 2^{exps[d]} patches per side
-// (2^{exps[0] + exps[1]} patches in total)
-// -----------------------------------------------------------------------------
 uint General_Hilbert_index_orientation(
     const uint * exps, const uint * coords, uint & entry, uint & dir
 )
@@ -313,7 +265,7 @@ uint General_Hilbert_index_orientation(
         coords[dir] -= loc * (1 << i);
     }
 
-    // calculate entry and direction
+    // Calculate entry and direction
     if (min_exp)
     {
         index += Hilbert_index_orientation(min_exp, coords, entry, dir);
@@ -325,9 +277,6 @@ uint General_Hilbert_index_orientation(
 //==============================================================================
 //  General Hilbert index in 1D 
 //==============================================================================
-// Calculates the compact Hilbert index of a patch with given coordinates
-// for a simulation box with 2^{exps[0]} patches per side (in total)
-// -----------------------------------------------------------------------------
 uint General_Hilbert_index<ONE_DIM>(const uint * exps, uint * coords)
 {
     return (coords[0] >= (1U << exps[0])? ~0: coords[0];
@@ -336,10 +285,6 @@ uint General_Hilbert_index<ONE_DIM>(const uint * exps, uint * coords)
 //==============================================================================
 //  General Hilbert index in 2D 
 //==============================================================================
-// Calculates the compact Hilbert index of a patch with given coordinates
-// for a simulation box with 2^{exps[d]} patches per side
-// (2^{exps[0] + exps[1]} patches in total)
-// -----------------------------------------------------------------------------
 uint General_Hilbert_index<TWO_DIM>(const uint * exps, uint * coords)
 {
     uint entry = 0;
@@ -351,10 +296,6 @@ uint General_Hilbert_index<TWO_DIM>(const uint * exps, uint * coords)
 //==============================================================================
 //  General Hilbert index 3D
 //==============================================================================
-// Calculates the compact Hilbert index of a patch with given coordinates
-// for a simulation box with 2^{exps[d]} patches per side
-// (2^{exps[0] + exps[1] + exps[2]} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 uint General_Hilbert_index<THREE_DIM>(const uint * exps, const uint * coords)
 {
@@ -376,9 +317,9 @@ uint General_Hilbert_index<THREE_DIM>(const uint * exps, const uint * coords)
 
     const uint min_exp = exps[order[2]];
 
-    // approach on flattened 2D grid along max and med exps
+    // Approach on flattened 2D grid along max and med exps
     // 3D grid is projected along min_exp axis
-    // erase last min_exp bits, not relevant for this phase
+    // Erase last min_exp bits, not relevant for this phase
     const uint flat_exps[TWO_DIM]
         = { exps[order[0]] - min_exp, exps[order[1]] - min_exp };
 
@@ -392,23 +333,18 @@ uint General_Hilbert_index<THREE_DIM>(const uint * exps, const uint * coords)
         = General_Hilbert_index_orientation(flat_exps, flat_coords, entry, dir)
             * (1U << (3 * min_exp));
 
-    // In local cube of side 2^{min_exp}
-    // local entry point "entry" and initial direction "dir" of local Hilbert
-    // curve has been determined by the previous call of General_Hilbert_index
-    // relative position in local cube is given by last min_exp bits of position
-    // only keep the last min_exp bits
+    // In the local cube of side 2^{min_exp} the local entry point and initial
+    // direction of the local Hilbert curve has already been determined
+    // The relative position in the local cube is given by last min_exp bits
+    // of the position
     for (int d = 0; d < 3; ++d) { ord_coords[d] &= (1U << min_exp) - 1; }
 
-    // return overall index
     return index + Hilbert_index<THREE_DIM>(min_exp, ord_coords, entry, dir);
 }
 
 //==============================================================================
 //  Inverse general Hilbert index in 1D
 //==============================================================================
-// Calculates coordinates of a patch for a given Hilbert index
-// in a simulation box with 2^{exps[0]} patches per side (in total)
-// -----------------------------------------------------------------------------
 template<>
 void Inverse_general_Hilbert_index<ONE_DIM>(
     const uint *, uint * coords, const uint index
@@ -420,16 +356,12 @@ void Inverse_general_Hilbert_index<ONE_DIM>(
 //==============================================================================
 //  Inverse general Hilbert index in 2D
 //==============================================================================
-// Calculates coordinates of a patch for a given Hilbert index
-// in a simulation box with 2^{exps[d]} patches
-// per side (2^{exps[0] + exps[1]} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 void Inverse_general_Hilbert_index<TWO_DIM>(
     const uint * exps, uint * coords, const uint index
 )
 {
-    // compare exponents and target coordinate which must be shifted
+    // Compare the exponents and target a coordinate which must be shifted
     uint dir = (exps[0] < exps[1]);
     uint min_exp = exps[1 - dir];
     uint ind = index;
@@ -437,7 +369,7 @@ void Inverse_general_Hilbert_index<TWO_DIM>(
     uint shift = 0;
     uint loc;
 
-    // define in which sub-hypercube of side 2^{min_exp} the point is
+    // Define in which sub-hypercube of side 2^{min_exp} the point is
     for (int i = exps[0] + exps[1] - 1; i >= int(2 * min_exp); --i)
     {
         loc = Get_bit(ind, i);
@@ -445,20 +377,16 @@ void Inverse_general_Hilbert_index<TWO_DIM>(
         ind -= loc * (1 << i);
     }
 
-    // run the cubic inversion algorithm in the sub-hypercube
+    // Run the 2D inversion algorithm in the sub-hypercube
     Inverse_Hilbert_index<TWO_DIM>(min_exp, coords, ind, 0, dir);
 
-    // shift the appropriate coordinate by the necessary value
+    // Shift the appropriate coordinate by the necessary value
     coords[dir] += shift;
 }
 
 //==============================================================================
 //  Inverse general Hilbert index in 3D
 //==============================================================================
-// Calculates coordinates of a patch for a given Hilbert index
-// in a simulation box with 2^{exps[d]} patches
-// per side (2^{exps[0] + exps[1] + exps[2]} patches in total)
-// -----------------------------------------------------------------------------
 template<>
 void Inverse_general_Hilbert_index<THREE_DIM>(
     const uint * exps, uint * coords, const uint index
@@ -466,7 +394,7 @@ void Inverse_general_Hilbert_index<THREE_DIM>(
 {
     uint order[THREE_DIM];
                       
-    // compare exponents
+    // Compare exponents
     Identify_descend_order(exps, order);
 
     const uint min_exp = exps[order[2]];
@@ -476,35 +404,34 @@ void Inverse_general_Hilbert_index<THREE_DIM>(
 
     uint loc_coords[THREE_DIM];
 
-    // localize in which sub-hypercube the point is
-    // do not account for the first (3 * min_exp) bits of index
+    // Localize in which sub-hypercube the point is
+    // Do not account for the first (3 * min_exp) bits of index
     uint loc_ind = index >> (3 * min_exp);
 
-    // run 2D inversion algorithm on reduced domain
+    // Run the 2D inversion algorithm on reduced domain
     Inverse_general_Hilbert_index<TWO_DIM>(flat_exps, loc_coords, loc_ind);
 
-    // now coordinates store the position of the cube in the 2D domain
-    // we need to run the 3D inversion algorithm on this cube
-    // with the correct entry point and direction
+    // Run the 3D inversion algorithm on this cube with the correct entry point
+    // and direction
     uint entry = 0;
     uint dir = 0;
 
-    // run the 2D indexgenerator in order to evaluate entry and dir
+    // Run the 2D indexgenerator in order to evaluate the entry and direction
     loc_ind
         = General_Hilbert_index_orientation(flat_exps, loc_coords, entry, dir);
 
-    // store transformed coordinates in the resulting global frame
+    // Store transformed coordinates in the resulting global frame
     coords[order[0]] = loc_coords[0] * (1U << min_exp);
     coords[order[1]] = loc_coords[1] * (1U << min_exp);
     coords[order[2]] = 0;
 
-    // use only first bits of index for the local hypercube
+    // Use only first bits of index for the local hypercube
     loc_ind = index & ((1U << (3 * min_exp)) - 1);
 
-    // run the cubic inversion algorithm in the local sub hypercube
+    // Run the cubic inversion algorithm in the local sub hypercube
     Inverse_Hilbert_index<THREE_DIM>(min_exp, loc_coords, loc_ind, entry, dir);
 
-    // store the resulting coordinates
+    // Store the resulting coordinates
     coords[order[0]] += loc_coords[0];
     coords[order[1]] += loc_coords[1];
     coords[order[2]] += loc_coords[2];
@@ -512,4 +439,4 @@ void Inverse_general_Hilbert_index<THREE_DIM>(
 
 } // namespace maxwell
 
-// hilbert.cpp
+// src/.../hilbert_index.cpp

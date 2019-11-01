@@ -31,10 +31,25 @@ TransferDescriptorData::~TransferDescriptorData()
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Set data
+//  Access buffer records
 //==============================================================================
 template<typename Type>
-void TransferDescriptor::Set_data(const uint target_rank)
+Type * TransferDescriptor::Sending_buffer_record(const uint ind)
+{
+    return data->sending_buffer + data->transfer_markings[ind].offset;
+}
+
+template<typename Type>
+Type * TransferDescriptor::Receiving_buffer_record(const uint ind)
+{
+    return data->receiving_buffer + data->transfer_markings[ind].offset;
+}
+
+//==============================================================================
+//  Set
+//==============================================================================
+template<typename Type>
+void TransferDescriptor::Set(const uint target_rank)
 {
     data = new TransferDescriptorData(target_rank);
 }
@@ -74,21 +89,6 @@ template<typename Type>
 void TransferDescriptor::Update_buffer_size(const uint marking_size)
 {
     data->buffer_size += marking_size;
-}
-
-//==============================================================================
-//  Access buffer records
-//==============================================================================
-template<typename Type>
-Type * TransferDescriptor::Sending_buffer_record(const uint ind)
-{
-    return data->sending_buffer + data->transfer_markings[ind].offset;
-}
-
-template<typename Type>
-Type * TransferDescriptor::Receiving_buffer_record(const uint ind)
-{
-    return data->receiving_buffer + data->transfer_markings[ind].offset;
 }
 
 //==============================================================================
@@ -132,7 +132,8 @@ void TransferDescriptor::Unpack_transfer_data(
 
         // Receive the ghost from the correct buffer record
         patches[ind].Receive_ghost(
-            transfer_markings[b].sending_ghost_index, Receiving_buffer_record(b)
+            transfer_markings[b].receiving_ghost_index,
+            Receiving_buffer_record(b)
         );
     }
 }
@@ -240,7 +241,7 @@ void Allocate_patches(const uint ghost_width);
 
     patches.Allocate(Get_patch_count());
 
-#pragma omp parallel for
+// #pragma omp parallel for
     for (uint p = 0; p < patches.Get_size(); ++p)
     {
         uint patch_index = Get_min_patch_index() + p;
@@ -248,7 +249,7 @@ void Allocate_patches(const uint ghost_width);
         const Tuple<dim> patch_coords
             = Compute_patch_coordinates<dim, ord>(layer_sizes, patch_index);
 
-        patches[p].Set_data(
+        patches[p].Set(
             layer_sizes, patch_coords, patch_sizes, ghost_width, patch_index
         );
     }
@@ -286,7 +287,7 @@ void Domain::Create_transfer_descriptor(const uint ind, const uint rank)
         transfer_descriptors[t] = transfer_descriptors[t - 1];
     }
 
-    transfer_descriptors[ind].Set_data(rank);
+    transfer_descriptors[ind].Set(rank);
 }
 
 //==============================================================================
@@ -328,48 +329,44 @@ void Domain::Create_transfer_marking(
     const GhostMarking & ghost_marking
 )
 {
+    const uint size = Product<dim>(ghost_marking.sizes);
+
     const uint receiving_patch_index = ghost_marking.target_patch_index;
+    const uint8_t receiving_ghost_index = ghost_marking.target_ghost_index;
 
-    // If ghost marking does not correspond to the patch itself
-    if (sending_patch_index != receiving_patch_index)
+    // Identify receiving MPI rank associated with the ghost marking
+    const uint target_rank
+        = domain_bounds[Find_index(domain_bounds, receiving_patch_index)];
+
+    // If the transfer is local (i. e. intra-domain)
+    if (target_rank == rank)
     {
-        const uint size = Product<dim>(ghost_marking.sizes);
-        const uint8_t receiving_ghost_index = ghost_marking.target_ghost_index;
+        // Construct a new marking at the end of the local transfers array
+        local_markings.Append(
+            TransferMarking(
+                size, UNDEFINED, sending_patch_index, receiving_patch_index,
+                sending_ghost_index, receiving_ghost_index
+            )
+        );
+    }
+    // Otherwise, the transfer is an inter-domain one
+    else
+    {
+        // Find the correct descriptor, insert a new one if needed
+        TransferDescriptor<Type> & desc
+            = Get_transfer_descriptor(target_rank);
 
-        // Identify receiving MPI rank associated with the ghost marking
-        const uint target_rank
-            = domain_bounds[Find_index(domain_bounds, receiving_patch_index)];
+        // Construct a new marking at the end of corresponding array
+        desc.Add_transfer_marking(
+            TransferMarking(
+                size, desc.Get_buffer_size(),
+                sending_patch_index, receiving_patch_index,
+                sending_ghost_index, receiving_ghost_index
+            )
+        );
 
-        // If the transfer is local
-        if (target_rank == rank)
-        {
-            // Construct a new marking at the end of the local transfers array
-            local_markings.Append(
-                TransferMarking(
-                    size, UNDEFINED, sending_patch_index, receiving_patch_index,
-                    sending_ghost_index, receiving_ghost_index
-                )
-            );
-        }
-        // Otherwise, the transfer is an inter-domain one
-        else
-        {
-            // Find the correct descriptor, insert a new one if needed
-            TransferDescriptor<Type> & desc
-                = Get_transfer_descriptor(target_rank);
-
-            // Construct a new marking at the end of corresponding array
-            desc.Add_transfer_marking(
-                TransferMarking(
-                    size, desc.Get_buffer_size(),
-                    sending_patch_index, receiving_patch_index,
-                    sending_ghost_index, receiving_ghost_index
-                )
-            );
-
-            // Enlarge the size of the buffer by the one of the ghost
-            desc.Update_buffer_size(size);
-        }
+        // Enlarge the size of the buffer by the one of the ghost
+        desc.Update_buffer_size(size);
     }
 }
 
@@ -402,7 +399,15 @@ void Domain::Set_transfer_markings()
         // For each ghost marking
         for (uint g = 0; g < ghost_markings.Get_size(); ++g)
         {
-            Create_transfer_marking(sending_patch_index, g, ghost_markings[g]);
+            // If ghost marking does not correspond to the patch itself
+            if (sending_patch_index != ghost_markings[g].target_patch_index)
+            {
+                /// TODO /// Check out-of-bounds
+                // TO BE CONTINUED
+                Create_transfer_marking(
+                    sending_patch_index, g, ghost_markings[g]
+                );
+            }
         }
     }
 
@@ -418,7 +423,7 @@ void Domain::Set_transfer_markings()
 template<Dimension dim, Order ord, typename Type>
 void Domain::Perform_local_transfers()
 {
-#pragma omp parallel for
+// #pragma omp parallel for
     for (uint l = 0; l < local_markings; ++l)
     {
         const TransferMarking & marking = local_markings[l];

@@ -69,9 +69,7 @@ static Tuple<dim, Direction> & Compute_ghost_directions(const uint8_t ind)
 //  Reflect ghost directions
 //==============================================================================
 template<Dimension dim>
-static Tuple<dim, Direction> & Reflect_ghost_directions(
-    Tuple<dim, Direction> & directions
-)
+static Tuple<dim, Direction> & operator~(Tuple<dim, Direction> & directions)
 {
     for (int d = 0; d < dim; ++d)
     {
@@ -113,10 +111,10 @@ PatchData::PatchData(
 //
 ////////////////////////////////////////////////////////////////////////////////
 //==============================================================================
-//  Set data
+//  Set
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Set_data(
+void Set(
     const Tuple<dim> & relative_layer_sizes,
     const Tuple<dim> & patch_coordinates,
     const Tuple<dim> & patch_sizes,
@@ -239,10 +237,7 @@ void Patch::Set_ghost_markings(const uint index)
         }
 
         // Set target ghost index
-        marking.target_ghost_index
-            = Compute_ghost_index<dim>(
-                Reflect_ghost_directions<dim>(directions)
-            );
+        marking.target_ghost_index = Compute_ghost_index(~directions);
     }
 }
 
@@ -268,7 +263,7 @@ const Array<GhostMarking> & Patch::Get_ghost_markings() const
 //  Send ghost
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Patch::Send_ghost(const uint8_t ind, Type * buf) const
+void Patch::Send_ghost(const uint8_t sending_ghost_ind, Type * buf) const
 {
     /// TODO /// Cuda copy from device to device
 }
@@ -277,7 +272,7 @@ void Patch::Send_ghost(const uint8_t ind, Type * buf) const
 //  Receive ghost
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-void Patch::Receive_ghost(const uint8_t ind, const Type * buf)
+void Patch::Receive_ghost(const uint8_t receiving_ghost_ind, const Type * buf)
 {
     /// TODO /// Cuda copy from device to device
 }
@@ -286,7 +281,9 @@ void Patch::Receive_ghost(const uint8_t ind, const Type * buf)
 //  Transfer ghost
 //==============================================================================
 void Patch::Transfer_ghost(
-    const uint8_t send_ind, const Patch & recv_patch, const uint8_t recv_ghost
+    const uint8_t sending_ghost_ind,
+    const Patch & receiving_patch,
+    const uint8_t receiving_ghost_ind
 ) const
 {
     /// TODO /// Cuda copy from device to device

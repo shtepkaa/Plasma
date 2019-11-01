@@ -16,16 +16,13 @@ namespace maxwell {
 template<Dimension dim, typename Type>
 struct GhostMarking
 {
-    // Sizes
     Tuple<dim> sizes;
 
     uint sending_offset;
     uint receiving_offset;
 
-    // Index of a patch to communicate with
+    // Indices of a patch and ghost to communicate with
     uint target_patch_index;
-
-    // Index of a ghost in the patch to communicate with
     uint8_t target_ghost_index;
 
     GhostMarking();
@@ -52,7 +49,7 @@ struct GhostMarking
 ///  static ??? /// //  Reflect ghost directions
 ///  static ??? /// //==============================================================================
 ///  static ??? /// template<Dimension dim>
-///  static ??? /// Tuple<dim, Direction> & Reflect_ghost_directions(Tuple<dim, Direction> &);
+///  static ??? /// Tuple<dim, Direction> & operator~(Tuple<dim, Direction> &);
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -89,15 +86,15 @@ struct PatchData
     // Extended sizes (including surrounding ghosts sizes)
     Tuple<dim> extended_sizes;
 
+    //==========================================================================
+    //  Data
+    //==========================================================================
     // Ghost markings in lexicographic order (including the patch itself)
     Array<GhostMarking> ghost_markings;
 
     // Ghost marking index of the patch itself in the ghost markings array
     uint8_t ghost_index;
 
-    //==========================================================================
-    //  Data
-    //==========================================================================
     // Data size (including surrounding ghosts sizes),
     // which is the product of extended sizes
     uint data_size;
@@ -110,7 +107,7 @@ struct PatchData
     //  Data management
     //==========================================================================
     /// FIXME /// Either remove or switch to c++11: = delete
-    PatchData() {}
+    /// PatchData() {}
 
     PatchData(
         const Tuple<dim> &, const Tuple<dim> &, const Tuple<dim> &, const uint,
@@ -149,18 +146,23 @@ Tuple<dim> Compute_patch_coordinates(const Tuple<dim> &, const uint);
 template<Dimension dim, Order ord, typename Type>
 class Patch
 {
+    /// TODO /// Friend routines to work with Data()
+
     private:
 
         PatchData<dim, Type> * data;
 
-        void Set_ghost_markings(const uint);
-
-    public:
+        /// !!! /// For __device__ usage
+        inline Type * Data() { return data->data; }
 
         //======================================================================
         //  Data management
         //======================================================================
-        Set_data(
+        void Set_ghost_markings(const uint);
+
+    public:
+
+        Set(
             const Tuple<dim> &,
             const Tuple<dim> &,
             const Tuple<dim> &,
@@ -175,12 +177,7 @@ class Patch
         //  Access / mutate methods
         //======================================================================
         uint Get_index() const;
-
         const Array<GhostMarking> & Get_ghost_markings() const;
-
-            /// ??? /// // Sets / gets an element
-            /// ??? /// inline Type & operator[](const uint ind) { return data->data[ind]; }
-            /// ??? /// inline const Type & operator[](const uint i) const { return data->data[i]; }
 
         // Sends / receives ghost data from / to a raw pointer to address
         void Send_ghost(const uint8_t, Type *) const;

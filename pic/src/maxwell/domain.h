@@ -12,14 +12,14 @@ namespace maxwell {
 //  TransferMarking
 //
 ////////////////////////////////////////////////////////////////////////////////
-// Contains transfer marking data corresponding to a single ghost transfer
+// Contains marking data corresponding to a transfer of a single ghost
 ////////////////////////////////////////////////////////////////////////////////
 struct TransferMarking
 {
-    // Data size
+    // Buffer record size
     uint size;
 
-    // Data offset in buffer
+    // Buffer record offset
     uint offset;
 
     uint sending_patch_index;
@@ -29,6 +29,9 @@ struct TransferMarking
     uint8_t sending_ghost_index;
     uint8_t receiving_ghost_index;
 
+    //==========================================================================
+    //  Data management
+    //==========================================================================
     TransferMarking();
 
     TransferMarking(
@@ -104,14 +107,21 @@ class TransferDescriptor
 
         TransferDescriptorData<Type> * data;
 
+        //======================================================================
+        //  Access / mutate methods
+        //======================================================================
+        // Returns a raw pointer to the buffer location corresponding
+        // to the record with a given index
+        Type * Sending_buffer_record(const uint = 0);
+        Type * Receiving_buffer_record(const uint = 0);
+
     public:
 
         //======================================================================
         //  Data management
         //======================================================================
-        void Set_data(const uint);
+        void Set(const uint);
         void Allocate_buffers();
-
         void Add_transfer_marking(const TransferMarking &);
 
         TransferDescriptor(): data(NULL) {}
@@ -126,11 +136,6 @@ class TransferDescriptor
         void Update_buffer_size(const uint);
 
         const Array<TransferMarking> & Get_transfer_markings() const;
-
-        // Returns a raw pointer to the buffer location corresponding
-        // to the record with a given index
-        Type * Sending_buffer_record(const uint = 0);
-        Type * Receiving_buffer_record(const uint = 0);
 
         //======================================================================
         //  Communication methods
@@ -203,8 +208,11 @@ class Domain
         Array<TransferDescriptor> transfer_descriptors;
 
         //======================================================================
-        //  Initialization methods
+        //  Data management
         //======================================================================
+        /// FIXME /// Either remove or switch to c++11: = delete
+        // Domain() {}
+
         // Sets initial domain bounds
         void Initialize_domain_bounds();
 
@@ -221,9 +229,9 @@ class Domain
         //======================================================================
         //  Inter-domain communication methods
         //======================================================================
-        // Inserts a new transfer descriptor corresponding to the given MPI rank
+        // Inserts a new transfer descriptor corresponding to a given MPI rank
         // at a given position to the descriptor array already sorted
-        // in ascending order
+        // in the ascending order
         void Create_transfer_descriptor(const uint, const uint);
 
         // Returns a transfer descriptor corresponding to a target MPI rank
@@ -243,14 +251,11 @@ class Domain
 
         void Perform_global_transfers();
 
+    public:
+
         //======================================================================
         //  Data management
         //======================================================================
-        /// FIXME /// Either remove or switch to c++11: = delete
-        Domain() {}
-
-    public:
-
         Domain(const Tuple<dim> &, const Tuple<dim> &, const uint);
         ~Domain() {}
 
