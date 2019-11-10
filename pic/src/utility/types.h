@@ -3,6 +3,11 @@
 
 namespace maxwell {
 
+/// TODO /// Move the following to macros.h
+#define X(tuple) (tuple).data[0]
+#define Y(tuple) (tuple).data[1]
+#define Z(tuple) (tuple).data[2]
+
 typedef unsigned int uint;
 
 // Utility constants

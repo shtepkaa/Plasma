@@ -181,14 +181,6 @@ struct Tuple
     // Gets / sets a component
     inline Type & operator[](const uint ind) { return data[ind]; }
     inline const Type & operator[](const uint ind) const { return data[ind]; }
-
-    inline Type & X() { return data[0]; }
-    inline Type & Y() { return data[1]; }
-    inline Type & Z() { return data[2]; }
-
-    inline const Type & X() const { return data[0]; }
-    inline const Type & Y() const { return data[1]; }
-    inline const Type & Z() const { return data[2]; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

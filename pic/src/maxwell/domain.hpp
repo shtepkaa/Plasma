@@ -68,8 +68,11 @@ void TransferDescriptor::Allocate_buffers()
 //==============================================================================
 //  Add transfer marking
 //==============================================================================
-void Add_transfer_marking(const TransferMarking & marking)
+void TransferDescriptor::Add_transfer_marking(const TransferMarking & marking)
 {
+    // Enlarge the size of the buffer by the one of the marking
+    Update_buffer_size(marking.size);
+
     transfer_markings.Append(marking);
 }
 
@@ -191,7 +194,7 @@ void TransferDescriptor::Receive()
 //==============================================================================
 //  Initialize domain bounds
 //==============================================================================
-/// FIXME ///
+/// FIXME /// Cartesian index
 template<Dimension dim, Order ord, typename Type>
 void Domain::Initialize_domain_bounds()
 {
@@ -287,18 +290,17 @@ void Domain::Create_transfer_descriptor(const uint ind, const uint rank)
         transfer_descriptors[t] = transfer_descriptors[t - 1];
     }
 
+    // Set a new descriptor at the correct position
     transfer_descriptors[ind].Set(rank);
 }
 
 //==============================================================================
-//  Get transfer descriptor
+//  Transfer descriptor
 //==============================================================================
 // Finds the corresponding descriptor in array by rank comparisons, creates
 // a new descriptor if there is no an appropriate one
 template<Dimension dim, Order ord, typename Type>
-TransferDescriptor<Type> & Domain::Get_transfer_descriptor(
-    const uint target_rank
-)
+TransferDescriptor<Type> & Domain::Transfer_descriptor(const uint target_rank)
 {
     // Identify the correct position in transfer descriptor array
     const uint ind
@@ -326,7 +328,7 @@ template<Dimension dim, Order ord, typename Type>
 void Domain::Create_transfer_marking(
     const uint sending_patch_index,
     const uint8_t sending_ghost_index,
-    const GhostMarking & ghost_marking
+    const GhostMarking<dim, Type> & ghost_marking
 )
 {
     const uint size = Product<dim>(ghost_marking.sizes);
@@ -344,7 +346,8 @@ void Domain::Create_transfer_marking(
         // Construct a new marking at the end of the local transfers array
         local_markings.Append(
             TransferMarking(
-                size, UNDEFINED, sending_patch_index, receiving_patch_index,
+                size, UNDEFINED,
+                sending_patch_index, receiving_patch_index,
                 sending_ghost_index, receiving_ghost_index
             )
         );
@@ -353,8 +356,7 @@ void Domain::Create_transfer_marking(
     else
     {
         // Find the correct descriptor, insert a new one if needed
-        TransferDescriptor<Type> & desc
-            = Get_transfer_descriptor(target_rank);
+        TransferDescriptor<Type> & desc = Transfer_descriptor(target_rank);
 
         // Construct a new marking at the end of corresponding array
         desc.Add_transfer_marking(
@@ -364,9 +366,6 @@ void Domain::Create_transfer_marking(
                 sending_ghost_index, receiving_ghost_index
             )
         );
-
-        // Enlarge the size of the buffer by the one of the ghost
-        desc.Update_buffer_size(size);
     }
 }
 
@@ -393,17 +392,21 @@ void Domain::Set_transfer_markings()
     {
         const uint sending_patch_index = patches[p].Get_index();
 
-        const Array<GhostMarking> & ghost_markings
+        const Array< GhostMarking<dim, Type> > & ghost_markings
             = patches[p].Get_ghost_markings();
 
         // For each ghost marking
         for (uint g = 0; g < ghost_markings.Get_size(); ++g)
         {
+            const uint receiving_patch_index
+                = ghost_markings[g].target_patch_index;
+
             // If ghost marking does not correspond to the patch itself
-            if (sending_patch_index != ghost_markings[g].target_patch_index)
+            if (
+                receiving_patch_index != ~0
+                && sending_patch_index != receiving_patch_index
+            )
             {
-                /// TODO /// Check out-of-bounds
-                // TO BE CONTINUED
                 Create_transfer_marking(
                     sending_patch_index, g, ghost_markings[g]
                 );

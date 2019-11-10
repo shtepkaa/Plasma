@@ -28,29 +28,6 @@ struct GhostMarking
     GhostMarking();
 };
 
-/// static ??? /// ////////////////////////////////////////////////////////////////////////////////
-///  static ??? /// //
-///  static ??? /// //  Ghost index and directions computation functions
-///  static ??? /// //
-///  static ??? /// ////////////////////////////////////////////////////////////////////////////////
-///  static ??? /// //==============================================================================
-///  static ??? /// //  Compute ghost index
-///  static ??? /// //==============================================================================
-///  static ??? /// template<Dimension dim>
-///  static ??? /// uint8_t Compute_ghost_index(const Tuple<dim, Direction> &);
-///  static ??? /// 
-///  static ??? /// //==============================================================================
-///  static ??? /// //  Compute ghost directions
-///  static ??? /// //==============================================================================
-///  static ??? /// template<Dimension dim>
-///  static ??? /// Tuple<dim, Direction> & Compute_ghost_directions(const uint8_t);
-///  static ??? /// 
-///  static ??? /// //==============================================================================
-///  static ??? /// //  Reflect ghost directions
-///  static ??? /// //==============================================================================
-///  static ??? /// template<Dimension dim>
-///  static ??? /// Tuple<dim, Direction> & operator~(Tuple<dim, Direction> &);
-
 ////////////////////////////////////////////////////////////////////////////////
 //
 //  PatchData
@@ -63,8 +40,8 @@ struct GhostMarking
 //     ord -- order of patch numeration
 //     Type -- supported data type
 ////////////////////////////////////////////////////////////////////////////////
-/// FIXME /// Add a template parameter corresponding to internal patch data
-/// FIXME /// storage order
+/// FIXME ??? /// Add a template parameter corresponding to internal patch data
+/// FIXME ??? /// storage order
 template<Dimension dim, typename Type>
 struct PatchData
 {
@@ -90,7 +67,7 @@ struct PatchData
     //  Data
     //==========================================================================
     // Ghost markings in lexicographic order (including the patch itself)
-    Array<GhostMarking> ghost_markings;
+    Array< GhostMarking<dim, Type> > ghost_markings;
 
     // Ghost marking index of the patch itself in the ghost markings array
     uint8_t ghost_index;
@@ -177,7 +154,7 @@ class Patch
         //  Access / mutate methods
         //======================================================================
         uint Get_index() const;
-        const Array<GhostMarking> & Get_ghost_markings() const;
+        const Array< GhostMarking<dim, Type> > & Get_ghost_markings() const;
 
         // Sends / receives ghost data from / to a raw pointer to address
         void Send_ghost(const uint8_t, Type *) const;

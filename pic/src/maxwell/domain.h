@@ -235,12 +235,12 @@ class Domain
         void Create_transfer_descriptor(const uint, const uint);
 
         // Returns a transfer descriptor corresponding to a target MPI rank
-        TransferDescriptor<Type> & Get_transfer_descriptor(const uint);
+        TransferDescriptor<Type> & Transfer_descriptor(const uint);
 
         // Creates the transfer marking in the correct transfer descriptor array
         // corrseponding to a given sender date and a ghost marking
         void Create_transfer_marking(
-            const uint, const uint8_t, const GhostMarking &
+            const uint, const uint8_t, const GhostMarking<dim, Type> &
         );
 
         // Allocates inter-domain transfer buffers on device 

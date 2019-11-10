@@ -14,6 +14,7 @@ namespace maxwell {
 //  GhostMarking struct
 //
 ////////////////////////////////////////////////////////////////////////////////
+template<Dimension dim, typename Type>
 GhostMarking::GhostMarking():
     sizes(),
     sending_offset(0),
@@ -211,7 +212,7 @@ void Patch::Set_ghost_markings(const uint index)
 #pragma omp parallel for
     for (uint8_t g = 0; g < data->ghost_markings.Get_size(); ++g)
     {
-        GhostMarking & marking = data->ghost_markings[g];
+        GhostMarking<dim, Type> & marking = data->ghost_markings[g];
 
         // Convert the ghost index to a multiindex of directions
         Tuple<dim, Direction> & directions = Compute_ghost_directions<dim>(g);
@@ -254,7 +255,7 @@ uint Patch::Get_index() const
 //  Get ghost markings
 //==============================================================================
 template<Dimension dim, Order ord, typename Type>
-const Array<GhostMarking> & Patch::Get_ghost_markings() const
+const Array< GhostMarking<dim, Type> > & Patch::Get_ghost_markings() const
 {
     return data->ghost_markings;
 }
